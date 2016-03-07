@@ -18,7 +18,7 @@ void P2() {
 
     for( uint32_t x = ( 1 << 8 ); x < ( 1 << 24 ); x++ ) {
       uint32_t r = weight( x );  // printf( "weight( %d ) = %d\n", x, r );
-      //print("weight( %d ) = %d \n",x,r,0);
+      print("weight( %d ) = %d \n",x,r,0);
     }
   }
 

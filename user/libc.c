@@ -53,65 +53,32 @@ void print(char* x, int d1, int d2, int d3){
 }
 int getLen( int x){
   if (x <         10) return 1;
-  if (x <        100) return 2;
-  if (x <       1000) return 3;
-  if (x <      10000) return 4;
-  if (x <     100000) return 5;
-  if (x <    1000000) return 6;
-  if (x <   10000000) return 7;
-  if (x <  100000000) return 8;
-  if (x < 1000000000) return 9;
+  if (x <        100) return 10;
+  if (x <       1000) return 100;
+  if (x <      10000) return 1000;
+  if (x <     100000) return 10000;
+  if (x <    1000000) return 100000;
+  if (x <   10000000) return 1000000;
+  if (x <  100000000) return 10000000;
+  if (x < 1000000000) return 100000000;
   return 10;
 }
 
 void writeDigit(int x){
-switch(x){
-  case 0:
-  write(0, "0", 1);
-  break;
-  case 1:
-  write(0, "1", 1);
-  break;
-  case 2:
-  write(0, "2", 1);
-  break;
-  case 3:
-  write(0, "3", 1);
-  break;
-  case 4:
-  write(0, "4", 1);
-  break;
-  case 5:
-  write(0, "5", 1);
-  break;
-  case 6:
-  write(0, "6", 1);
-  break;
-  case 7:
-  write(0, "7", 1);
-  break;
-  case 8:
-  write(0, "8", 1);
-  break;
-  case 9:
-  write(0, "9", 1);
-  break;
-}
-return;
+  PL011_putc( UART0, '0' + x );
+  return;
 }
 
 
 
 int writeInt(int fd, int x){
-  int n = getLen(x);
-  int y = 1;
-  for(int j=1;j < n;j++){
-    y *= 10;
-  }
+  int y = getLen(x);
 
   while(y >= 1){
-    writeDigit(x/y);
-    x = x%y;
+    int temp = x/y;
+    writeDigit(temp);
+    x -= (temp*y);
     y = y / 10;
   }
+  return 0;
 }

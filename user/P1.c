@@ -22,7 +22,7 @@ void P1() {
     for( uint32_t x = ( 1 << 8 ); x < ( 1 << 24 ); x++ ) {
       for( uint32_t y = ( 1 << 8 ); y < ( 1 << 24 ); y++ ) {
         uint32_t r = gcd( x, y );
-        //print("gcd( %d, %d) = %d \n",x,y,r);
+        print("gcd( %d, %d) = %d \n",x,y,r);
         //exit();
 /*
         uint32_t len = getLen(r);

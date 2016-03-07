@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "PL011.h"
 
 int write( int fd, void* x, size_t n );
 int writeInt( int fd, int x);

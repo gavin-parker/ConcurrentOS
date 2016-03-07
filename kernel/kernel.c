@@ -55,16 +55,12 @@ void increasePriority( int i, int age){
 */
 
 void scheduler( ctx_t* ctx ) {
-  print("entering scheduler\n",0,0,0);
-  int id = current->pid;
-  increasePriority(id,-1);
-  int nextId = getNextProcess();
+  //print("entering scheduler\n",0,0,0);
+  uint32_t id = current->pid;
+  uint32_t nextId = getNextProcess();
   memcpy( &pcb[ id ].ctx, ctx, sizeof( ctx_t ) );
   memcpy( ctx, &pcb[ nextId ].ctx, sizeof( ctx_t ) );
   current = &pcb[ nextId ];
-  print("switched from pid %d to pid %d  with priority %d\n",id,nextId, pcb[nextId].priority);
-  //print("there are %d processes \n", processCount,0,0);
-  //print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",0,0,0);
 }
 
 //gets the index of the next free slot in the pcb table
@@ -131,9 +127,9 @@ void kernel_handler_rst( ctx_t* ctx              ) {
    *   mode, with IRQ interrupts enabled, and
    * - the PC and SP values matche the entry point and top of stack.
    */
-  createProcess(( uint32_t )( entry_P0 ), 0x50, 0);
-  createProcess(( uint32_t )( entry_P1 ), 0x50, 0);
-  createProcess(( uint32_t )( entry_P2 ), 0x50, 0);
+  createProcess(( uint32_t )( entry_terminal ), 0x50, 0);
+  //createProcess(( uint32_t )( entry_P1 ), 0x50, 0);
+  //createProcess(( uint32_t )( entry_P2 ), 0x50, 0);
 
 
   current = &pcb[ 0 ]; memcpy( ctx, &current->ctx, sizeof( ctx_t ) );
@@ -144,23 +140,14 @@ void kernel_handler_rst( ctx_t* ctx              ) {
 
 int do_fork(ctx_t* ctx){
   write(0,"did a fork\n",11);
-  write(0, "there are now ", 14);
-  writeInt(0,processCount);
-  write(0, " processes \n",12 );
   copyProcess(ctx);
   return 0;
 }
 
 int do_exit(ctx_t* ctx){
   pid_t pid = current->pid;
-
-  print("pid = %d\n", pid,0,0);
-  for(int i=pid;i < processCount; i++){
-    memcpy(&pcb[i].ctx, &pcb[i+i].ctx, sizeof(ctx_t));
-  }
-    processCount--;
-    scheduler(ctx);
-
+  pcb[pid].priority = -1;
+  scheduler(ctx);
   return 0;
 }
 
@@ -210,19 +197,21 @@ void kernel_handler_svc( ctx_t* ctx, uint32_t id ) {
 }
 
 void kernel_handler_irq(ctx_t* ctx) {
+  irq_unable();
   // Step 2: read  the interrupt identifier so we know the source.
-  uint32_t id = GICC0->IAR;
-  rand++;
+  int id = GICC0->IAR;
   // Step 4: handle the interrupt, then clear (or reset) the source.
 
   if( id == GIC_SOURCE_TIMER0 ) {
+    rand++;
     scheduler(ctx);
     /*PL011_putc( UART0, 'T' );*/ TIMER0->Timer1IntClr = 0x01;
 
   }
 
   // Step 5: write the interrupt identifier to signal we're done.
-
+  irq_enable();
   GICC0->EOIR = id;
+
   return;
 }
