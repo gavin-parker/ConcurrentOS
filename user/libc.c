@@ -14,6 +14,23 @@ int write( int fd, void* x, size_t n ) {
 
   return r;
 }
+
+int read(int fd, void *buf, size_t nbyte) {
+  int r;
+
+  asm volatile( "mov r0, %1 \n"
+                "mov r1, %2 \n"
+                "mov r2, %3 \n"
+                "svc #4     \n" // dont forget to declare a new svc
+                "mov %0, r0 \n"
+              : "=r" (r)
+              : "r" (fd), "r" (buf), "r" (nbyte)
+              : "r0", "r1", "r2" );
+
+  return r;
+}
+
+
 int fork(){
   asm volatile("svc #2     \n");
   return 0;

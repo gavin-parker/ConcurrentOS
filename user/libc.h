@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include "PL011.h"
 
+int read(int fd, void *x, size_t n);
 int write( int fd, void* x, size_t n );
 int writeInt( int fd, int x);
 int getLen( int x);

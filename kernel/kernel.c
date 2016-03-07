@@ -184,6 +184,17 @@ void kernel_handler_svc( ctx_t* ctx, uint32_t id ) {
       do_exit(ctx);
       break;
     }
+    case 0x04 : { // read( fd, x, n )
+      int   fd = ( int   )( ctx->gpr[ 0 ] );
+      char*  x = ( char* )( ctx->gpr[ 1 ] );
+      int    n = ( int   )( ctx->gpr[ 2 ] );
+
+      for( int i = 0; i < n; i++ ) {
+        x[i] = PL011_getc( UART0 );
+      }
+      ctx->gpr[ 0 ] = n;
+      break;
+    }
     default   : { // unknown
         PL011_putc( UART0, 'O' ); TIMER0->Timer1IntClr = 0x01;
         PL011_putc( UART0, 'O' ); TIMER0->Timer1IntClr = 0x01;
@@ -206,7 +217,6 @@ void kernel_handler_irq(ctx_t* ctx) {
     rand++;
     scheduler(ctx);
     /*PL011_putc( UART0, 'T' );*/ TIMER0->Timer1IntClr = 0x01;
-
   }
 
   // Step 5: write the interrupt identifier to signal we're done.
