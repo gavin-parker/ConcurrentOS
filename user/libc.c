@@ -30,7 +30,16 @@ int read(int fd, void *buf, size_t nbyte) {
   return r;
 }
 
-
+int strcmp(char* x, char* y){
+  while(*x != '\0' && *y != '\0'){
+    if(*x != *y){
+      return -1;
+    }
+    x++;
+    y++;
+  }
+  return 1;
+}
 int fork(){
   asm volatile("svc #2     \n");
   return 0;

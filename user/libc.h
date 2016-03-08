@@ -12,4 +12,5 @@ int getLen( int x);
 int fork();
 int exit();
 void print(char* x, int d1, int d2, int d3);
+int strcmp(char* x, char* y);
 #endif

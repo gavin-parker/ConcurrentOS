@@ -77,7 +77,6 @@ int getSlot(){
 
 //finds the next free slot in the pcb table and copies in the new process
 void createProcess(uint32_t pc, uint32_t cpsr, uint32_t priority  ){
-  print("creating a process\n",0,0,0);
   pid_t pid = getSlot();
   memset( &pcb[ pid ], 0, sizeof( pcb_t ) );
   pcb[pid].priority   = priority;
@@ -85,19 +84,29 @@ void createProcess(uint32_t pc, uint32_t cpsr, uint32_t priority  ){
   pcb[ pid ].ctx.cpsr = cpsr;
   pcb[ pid ].ctx.pc   = pc;
   pcb[ pid ].ctx.sp   = stack + pid*0x00001000;
+  print("created a process P%d\n",pid,0,0);
 }
 
-void copyProcess(ctx_t * ctx){
 //copy whole ctx to new process
+void copyProcess(ctx_t * ctx){
+  //get a new pid
   pid_t pid = getSlot();
+  //blank out the new pcb because why not?
   memset( &pcb[ pid ], 0, sizeof( pcb_t ) );
+  //set the new pid
   pcb[ pid ].pid      = pid;
+  //copy in the current context
   memcpy(&pcb[pid].ctx, ctx, sizeof(ctx_t));
-  pcb[pid].ctx.sp     = stack + pid*0x00001000;
+  //allocate some new stack
+  pcb[pid].priority = 0;
+  pid_t currentPid = current->pid;
+  //this bit is dodgy!
+  int difference = (pid - currentPid);
+  memcpy(&stack + pid*0x00001000, &stack + currentPid*0x00001000, 0x00001000);
+  pcb[pid].ctx.sp += difference*0x00001000;
 }
 
 void kernel_handler_rst( ctx_t* ctx              ) {
-
 
   /* Configure the mechanism for interrupt handling by
    *
@@ -139,7 +148,6 @@ void kernel_handler_rst( ctx_t* ctx              ) {
 
 
 int do_fork(ctx_t* ctx){
-  write(0,"did a fork\n",11);
   copyProcess(ctx);
   return 0;
 }
