@@ -12,12 +12,22 @@
 pcb_t pcb[ programs ], *current = NULL;
 int processCount = 0;
 uint32_t stack = &tos_irq;
+//maxAge is the number of fires of the timer before ageing the processes
+int agetime = 0;
+int maxAge = 3;
 
 int rand = 0;
 
 
 void incrementStack(){
     stack = stack + 0x00001000;
+}
+void age(){
+  for(int i=0;i < programs; i++){
+    if(pcb[i].priority != -1 && pcb[i].priority > 0){
+      pcb[i].priority -= 1;
+    }
+  }
 }
 
 //get the index of the proc with highest priority
@@ -259,6 +269,11 @@ void kernel_handler_irq(ctx_t* ctx) {
   if( id == GIC_SOURCE_TIMER0 ) {
     rand++;
     scheduler(ctx,0);
+    agetime++;
+    if(agetime >= maxAge){
+      age();
+      agetime = 0;
+    }
     /*PL011_putc( UART0, 'T' );*/ TIMER0->Timer1IntClr = 0x01;
   }
 

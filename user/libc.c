@@ -2,7 +2,6 @@
 
 int write( int fd, void* x, size_t n ) {
   int r;
-
   asm volatile( "mov r0, %1 \n"
                 "mov r1, %2 \n"
                 "mov r2, %3 \n"
@@ -32,9 +31,13 @@ int read(int fd, void *buf, size_t nbyte) {
   return r;
 }
 void kill(int p){
-asm volatile( "mov r0, %0 \n"
-              "svc #5     \n"
-            : "=p" (p));
+  int r;
+
+  asm volatile( "mov r0, %0 \n"
+                "svc #5     \n"
+              : "=r" (r)
+              : "p" (p)
+              : "r0");
 
 }
 
