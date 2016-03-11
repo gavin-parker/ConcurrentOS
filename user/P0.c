@@ -18,7 +18,7 @@ void P0() {
   int x = 0;
   char* str = "P0\n";
   write( 0, str, 3 );
-  fork();
+  //fork();
   while( 1 ) {
 
     // test whether each x for 2^8 < x < 2^24 is prime or not

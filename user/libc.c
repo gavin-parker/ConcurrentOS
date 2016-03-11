@@ -14,7 +14,9 @@ int write( int fd, void* x, size_t n ) {
 
   return r;
 }
-
+void yield(){
+  asm volatile("svc #0     \n");
+}
 int read(int fd, void *buf, size_t nbyte) {
   int r;
 
@@ -29,8 +31,14 @@ int read(int fd, void *buf, size_t nbyte) {
 
   return r;
 }
+void kill(int p){
+asm volatile( "mov r0, %0 \n"
+              "svc #5     \n"
+            : "=p" (p));
 
-int strcmp(char* x, char* y){
+}
+
+int strcomp(char* x, char* y){
   while(*x != '\0' && *y != '\0'){
     if(*x != *y){
       return -1;
@@ -41,7 +49,14 @@ int strcmp(char* x, char* y){
   return 1;
 }
 int fork(){
-  asm volatile("svc #2     \n");
+  int r;
+  asm volatile("svc #2     \n" // dont forget to declare a new svc
+                "mov %0, r0 \n"
+              : "=r" (r));
+  return r;
+}
+int clone(){
+  asm volatile("svc #5     \n");
   return 0;
 }
 int exit(){

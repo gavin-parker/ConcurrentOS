@@ -19,6 +19,7 @@
 #include "P1.h"
 #include "P2.h"
 #include "terminal.h"
+#include "bottles.h"
 extern uint32_t tos_irq;
 
 

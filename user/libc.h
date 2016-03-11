@@ -11,6 +11,8 @@ int writeInt( int fd, int x);
 int getLen( int x);
 int fork();
 int exit();
+void yield();
 void print(char* x, int d1, int d2, int d3);
-int strcmp(char* x, char* y);
+int strcomp(char* x, char* y);
+void kill(int p);
 #endif

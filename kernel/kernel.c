@@ -49,18 +49,47 @@ void increasePriority( int i, int age){
   return;
 }
 
+int getNewProcess(int this){
+  int id = 0;
+  uint32_t p = -1;
+  for(int i=0;i< processCount;i++){
+    if(i != this){
+    if(pcb[i].priority < p){
+      p = pcb[i].priority;
+      id = i;
+    }else if((pcb[i].priority == p) && ((pcb[i].ctx.sp / 8) % 2 == (rand % 2)) ){
+      p = pcb[i].priority;
+      id = i;
+    }
+  }
+  }
+  return id;
+}
 /*
   My custom scheduler assigns a priority to each process - lower being high priority.
   processes with priorty '-1' i.e maxINT are finished and can be overwritten
 */
-
-void scheduler( ctx_t* ctx ) {
+void scheduler( ctx_t* ctx , int immediate) {
   //print("entering scheduler\n",0,0,0);
   uint32_t id = current->pid;
-  uint32_t nextId = getNextProcess();
+  uint32_t nextId;
+  if(immediate){
+   nextId = getNewProcess(id);
+  }else{
+   nextId = getNextProcess();
+}
   memcpy( &pcb[ id ].ctx, ctx, sizeof( ctx_t ) );
   memcpy( ctx, &pcb[ nextId ].ctx, sizeof( ctx_t ) );
   current = &pcb[ nextId ];
+  /*if(id != 0 && pcb[id].priority != -1){
+    pcb[id].priority += 1;
+  } */
+
+}
+void killProcess(ctx_t* ctx ,int p){
+  pcb[p].priority = -1;
+  scheduler(ctx,0);
+
 }
 
 //gets the index of the next free slot in the pcb table
@@ -88,7 +117,7 @@ void createProcess(uint32_t pc, uint32_t cpsr, uint32_t priority  ){
 }
 
 //copy whole ctx to new process
-void copyProcess(ctx_t * ctx){
+int copyProcess(ctx_t * ctx){
   //get a new pid
   pid_t pid = getSlot();
   //blank out the new pcb because why not?
@@ -102,8 +131,10 @@ void copyProcess(ctx_t * ctx){
   pid_t currentPid = current->pid;
   //this bit is dodgy!
   int difference = (pid - currentPid);
-  memcpy(&stack + pid*0x00001000, &stack + currentPid*0x00001000, 0x00001000);
-  pcb[pid].ctx.sp += difference*0x00001000;
+  //memcpy(&stack + pid*0x00001000, &stack + currentPid*0x00001000, 0x00001000);
+  //pcb[pid].ctx.sp += difference*0x00001000;
+  pcb[pid].ctx.gpr[ 0 ] = 0;
+  return pid;
 }
 
 void kernel_handler_rst( ctx_t* ctx              ) {
@@ -148,14 +179,13 @@ void kernel_handler_rst( ctx_t* ctx              ) {
 
 
 int do_fork(ctx_t* ctx){
-  copyProcess(ctx);
-  return 0;
+  return copyProcess(ctx);
 }
 
 int do_exit(ctx_t* ctx){
   pid_t pid = current->pid;
   pcb[pid].priority = -1;
-  scheduler(ctx);
+  scheduler(ctx,0);
   return 0;
 }
 
@@ -169,7 +199,7 @@ void kernel_handler_svc( ctx_t* ctx, uint32_t id ) {
    */
   switch( id ) {
     case 0x00 : { // yield()
-      scheduler( ctx );
+      scheduler( ctx ,1);
       break;
     }
     case 0x01 : { // write( fd, x, n )
@@ -185,7 +215,8 @@ void kernel_handler_svc( ctx_t* ctx, uint32_t id ) {
       break;
     }
     case 0x02 : { //fork()
-      do_fork(ctx);
+      int r = do_fork(ctx);
+      ctx->gpr[ 0 ] = r;
       break;
     }
     case 0x03 : {
@@ -201,6 +232,10 @@ void kernel_handler_svc( ctx_t* ctx, uint32_t id ) {
         x[i] = PL011_getc( UART0 );
       }
       ctx->gpr[ 0 ] = n;
+      break;
+    }
+    case 0x05 : {
+      killProcess(ctx, ctx->gpr[0]);
       break;
     }
     default   : { // unknown
@@ -223,7 +258,7 @@ void kernel_handler_irq(ctx_t* ctx) {
 
   if( id == GIC_SOURCE_TIMER0 ) {
     rand++;
-    scheduler(ctx);
+    scheduler(ctx,0);
     /*PL011_putc( UART0, 'T' );*/ TIMER0->Timer1IntClr = 0x01;
   }
 
