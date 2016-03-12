@@ -1,7 +1,6 @@
 #include "terminal.h"
 
-int running = 1;
-
+int running = 0;
 void run(char *x){
   if(strcomp(x,"p0") != -1){
     int i = fork();
@@ -32,7 +31,9 @@ void run(char *x){
   }
 }else if(strcomp(x, "quit") != -1){
   kill(running);
-  running = -1;
+  running = 0;
+}else if(strcomp(x, "tasks") != -1){
+  print("Running: %d \n", running,0,0);
 }else{
     print(x,0,0,0);
     print(" is not a known command \n",0,0,0);
@@ -53,8 +54,10 @@ void terminal(){
     if((char)x[0] == '\r'){
       command[buffer] = '\0';
       write(0, "\n",1);
+      if(buffer > 0){
       run(command);
       write(0, "\n",1);
+    }
       buffer = 0;
       write(0,"--$:",4);
     }else{
@@ -62,7 +65,6 @@ void terminal(){
       write( 0, x,1);
       buffer++;
     }
-
   }
 
 return;

@@ -9,7 +9,7 @@
 #include "SP804.h"
 #include "libc.h"
 #include "interrupt.h"
-
+#include "rec.h"
 // Include functionality from newlib, the embedded standard C library.
 
 #include <string.h>

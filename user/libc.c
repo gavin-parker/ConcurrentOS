@@ -42,7 +42,7 @@ void kill(int p){
 }
 
 int strcomp(char* x, char* y){
-  while(*x != '\0' && *y != '\0'){
+  while(*x != '\0' && *y != '\0' && *x != '\r' && *y != '\r'){
     if(*x != *y){
       return -1;
     }
