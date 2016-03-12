@@ -5,9 +5,18 @@
 void rec(){
   sharedMem messenger;
   messenger.flag = 0;
-  messenger.data = 1234;
-  print("sharing %d \n",&messenger,0,0);
-  share(0, &messenger);
+  messenger.data = 34;
+  openChannel(0, &messenger);
+  print("flag: %d, data: %d\n",messenger.flag,messenger.data,0);
+  int i = 0;
+  yield();
+  while(1){
+    i++;
+    //putDataInSync(&messenger, i);
+    //yield();
+  }
+
+
 }
 
 void (*entry_rec)() = &rec;

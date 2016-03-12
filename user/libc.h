@@ -7,12 +7,13 @@
 
 
 //structure to share data between processes
+//only use handler methods to get data !!
 typedef struct {
   //0 = not in use
   //1 = in use
   //2 = not in use, just changed
-  int flag;
-  int * data;
+  int  flag;
+  int  data;
 } sharedMem;
 
 int read(int fd, void *x, size_t n);
@@ -25,5 +26,9 @@ void yield();
 void print(char* x, int d1, int d2, int d3);
 int strcomp(char* x, char* y);
 void kill(int p);
-void share(int pid, int * add);
+//IPC methods
+void openChannel(int pid, int * add);
+int getChannel();
+void putDataInSync(sharedMem *mem, int data);
+int getDataInSync(sharedMem *mem);
 #endif

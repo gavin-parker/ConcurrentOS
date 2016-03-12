@@ -194,7 +194,6 @@ int do_fork(ctx_t* ctx){
 
 void do_share(int pid, int add){
   pcb[pid].ctx.gpr[0] = add;
-  print("shared add %d with %d \n",add,pid,0);
 }
 int do_exit(ctx_t* ctx){
   pid_t pid = current->pid;

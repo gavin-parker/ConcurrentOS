@@ -1,6 +1,20 @@
 #include "terminal.h"
 
 int running = 0;
+
+//recieves and prints out changes to shared memory
+void testChannel(){
+  sharedMem * dat = getChannel();
+
+  print("flag: %d, data: %d, \n",dat->flag,dat->data,0);
+  int x;
+  while(1){
+    //x = getDataInSync(&dat);
+    //print("incoming message %d \n",x,0,0);
+  }
+}
+
+
 void run(char *x){
   if(strcomp(x,"p0") != -1){
     int i = fork();
@@ -37,8 +51,7 @@ void run(char *x){
     }else{
       running = i;
       yield();
-      sharedMem * dat = get();
-      print("got flag: %d, data: %d \n",dat->flag,dat->data,0);
+      testChannel();
     }
   }else if(strcomp(x, "quit") != -1){
     kill(running);

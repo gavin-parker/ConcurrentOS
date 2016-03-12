@@ -16,6 +16,7 @@ int write( int fd, void* x, size_t n ) {
 void yield(){
   asm volatile("svc #0     \n");
 }
+
 int read(int fd, void *buf, size_t nbyte) {
   int r;
 
@@ -40,7 +41,8 @@ void kill(int p){
               : "r0");
 
 }
-void share(int pid, int * add){
+//shares an address with process with id 'pid'
+void openChannel(int pid, int * add){
   int r;
 
   asm volatile( "mov r0, %0 \n"
@@ -51,13 +53,43 @@ void share(int pid, int * add){
               : "r0", "r1");
 
 }
-int get(){
+//gets an adress from another process openchannel must have been called by
+//the sender
+int getChannel(){
   int r = 0;
   while(r == 0){
   asm volatile("mov %0, r0 \n"
                : "=r" (r));
   }
   return r;
+}
+//waits for the flag to be set in shared address space
+//then extracts data
+int getDataInSync(sharedMem *mem){
+  while(1){
+    if(mem->flag == 0){
+      return mem->data;
+    }else{
+      //print("can't get: channel in use %d \n",  mem->flag,0,0);
+      yield();
+    }
+  }
+}
+
+void putDataInSync(sharedMem *mem, int data){
+  while(1){
+    if(mem->flag == 0){
+      irq_unable();
+      mem->flag = 1;
+      mem->data = data;
+      mem->flag = 0;
+      irq_enable();
+      return;
+    }else{
+      //print("can't put: channel in use %d\n",mem->flag,0,0);
+      yield();
+    }
+  }
 }
 
 int strcomp(char* x, char* y){
