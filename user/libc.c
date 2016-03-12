@@ -40,7 +40,7 @@ void kill(int p){
               : "r0");
 
 }
-void share(int pid, int add){
+void share(int pid, int * add){
   int r;
 
   asm volatile( "mov r0, %0 \n"

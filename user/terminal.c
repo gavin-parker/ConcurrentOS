@@ -7,55 +7,55 @@ void run(char *x){
     if(i == 0){
       P0();
       exit();
-  }else{
-    running = i;
-    yield();
-  }
+    }else{
+      running = i;
+      yield();
+    }
   }else if(strcomp(x,"p1") != -1){
     int i = fork();
     if(i == 0){
-    P1();
-    exit();
-  }else{
-    running = i;
-    yield();
-  }
+      P1();
+      exit();
+    }else{
+      running = i;
+      yield();
+    }
   }else if(strcomp(x,"bottles") != -1){
     int i = fork();
     if(i == 0){
-    bottles();
-    exit();
+      bottles();
+      exit();
+    }else{
+      running = i;
+      yield();
+    }
+  }else if(strcomp(x,"rec") != -1){
+    int i = fork();
+    if(i == 0){
+      rec();
+      exit();
+    }else{
+      running = i;
+      yield();
+      sharedMem * dat = get();
+      print("got flag: %d, data: %d \n",dat->flag,dat->data,0);
+    }
+  }else if(strcomp(x, "quit") != -1){
+    kill(running);
+    running = 0;
+  }else if(strcomp(x, "tasks") != -1){
+    print("Running: %d \n", running,0,0);
   }else{
-    running = i;
-    yield();
-  }
-}else if(strcomp(x,"rec") != -1){
-  int i = fork();
-  if(i == 0){
-  rec();
-  exit();
-}else{
-  running = i;
-  yield();
-  int dat = get();
-  print("got %d \n",dat,0,0);
-}
-}else if(strcomp(x, "quit") != -1){
-  kill(running);
-  running = 0;
-}else if(strcomp(x, "tasks") != -1){
-  print("Running: %d \n", running,0,0);
-}else{
     print(x,0,0,0);
     print(" is not a known command \n",0,0,0);
   }
-return;
+  return;
 }
 
 
 
 void terminal(){
-  char* x = "";
+  char* x = "\r";
   char command[20] = "";
   uint32_t buffer = 0;
   print("Running the terminal\n",0,0,0);
@@ -66,9 +66,9 @@ void terminal(){
       command[buffer] = '\0';
       write(0, "\n",1);
       if(buffer > 0){
-      run(command);
-      write(0, "\n",1);
-    }
+        run(command);
+        write(0, "\n",1);
+      }
       buffer = 0;
       write(0,"--$:",4);
     }else{
@@ -78,7 +78,7 @@ void terminal(){
     }
   }
 
-return;
+  return;
 }
 
 
