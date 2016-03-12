@@ -5,9 +5,9 @@ int running = 0;
 //recieves and prints out changes to shared memory
 void testChannel(){
   sharedMem * dat = getChannel();
-
-  print("flag: %d, data: %d, \n",dat->flag,dat->data,0);
-  int x;
+  print("(term)flag: %d, data: %d\n",dat->flag,dat->data,0);
+  int * x = getDataInSync(dat);
+  print("(term)data: %d, \n",x,0,0);
   while(1){
     //x = getDataInSync(&dat);
     //print("incoming message %d \n",x,0,0);

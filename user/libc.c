@@ -66,12 +66,13 @@ int getChannel(){
 //waits for the flag to be set in shared address space
 //then extracts data
 int getDataInSync(sharedMem *mem){
+  print("(get)data: %d \n", mem->data,0,0);
+  print("(get)flag: %d \n", mem->flag,0,0);
   while(1){
     if(mem->flag == 0){
       return mem->data;
     }else{
       //print("can't get: channel in use %d \n",  mem->flag,0,0);
-      yield();
     }
   }
 }
