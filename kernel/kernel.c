@@ -192,6 +192,10 @@ int do_fork(ctx_t* ctx){
   return copyProcess(ctx);
 }
 
+void do_share(int pid, int add){
+  pcb[pid].ctx.gpr[0] = add;
+  print("shared add %d with %d \n",add,pid,0);
+}
 int do_exit(ctx_t* ctx){
   pid_t pid = current->pid;
   pcb[pid].priority = -1;
@@ -247,6 +251,10 @@ void kernel_handler_svc( ctx_t* ctx, uint32_t id ) {
     case 0x05 : {
       killProcess(ctx, ctx->gpr[0]);
       break;
+    case 0x06 : {
+      do_share(ctx->gpr[0], ctx->gpr[1]);
+      break;
+    }
     }
     default   : { // unknown
         PL011_putc( UART0, 'O' ); TIMER0->Timer1IntClr = 0x01;

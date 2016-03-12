@@ -15,4 +15,5 @@ void yield();
 void print(char* x, int d1, int d2, int d3);
 int strcomp(char* x, char* y);
 void kill(int p);
+void share(int pid, int add);
 #endif

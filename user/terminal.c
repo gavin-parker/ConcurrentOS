@@ -29,6 +29,17 @@ void run(char *x){
     running = i;
     yield();
   }
+}else if(strcomp(x,"rec") != -1){
+  int i = fork();
+  if(i == 0){
+  rec();
+  exit();
+}else{
+  running = i;
+  yield();
+  int dat = get();
+  print("got %d \n",dat,0,0);
+}
 }else if(strcomp(x, "quit") != -1){
   kill(running);
   running = 0;

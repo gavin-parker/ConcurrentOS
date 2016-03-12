@@ -40,6 +40,25 @@ void kill(int p){
               : "r0");
 
 }
+void share(int pid, int add){
+  int r;
+
+  asm volatile( "mov r0, %0 \n"
+                "mov r1, %1 \n"
+                "svc #6     \n"
+              :
+              : "r" (pid), "r" (add)
+              : "r0", "r1");
+
+}
+int get(){
+  int r = 0;
+  while(r == 0){
+  asm volatile("mov %0, r0 \n"
+               : "=r" (r));
+  }
+  return r;
+}
 
 int strcomp(char* x, char* y){
   while(*x != '\0' && *y != '\0' && *x != '\r' && *y != '\r'){
