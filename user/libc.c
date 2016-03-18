@@ -51,6 +51,7 @@ void openChannel(int pid, int * add){
               :
               : "r" (pid), "r" (add)
               : "r0", "r1");
+  yield();
 
 }
 //gets an adress from another process openchannel must have been called by
@@ -60,18 +61,23 @@ int getChannel(){
   while(r == 0){
   asm volatile("mov %0, r0 \n"
                : "=r" (r));
+  yield();
   }
   return r;
 }
 //waits for the flag to be set in shared address space
 //then extracts data
 int getDataInSync(sharedMem *mem){
-  print("(get)data: %d \n", mem->data,0,0);
+  uint32_t *data = (uint32_t *) mem->data;
+  print("(get)data: %d\n", data ,0,0);
   print("(get)flag: %d \n", mem->flag,0,0);
   while(1){
     if(mem->flag == 0){
-      return mem->data;
+      int *r = mem->data;
+      print("getting %d\n",r,0,0);
+      return r;
     }else{
+      yield();
       //print("can't get: channel in use %d \n",  mem->flag,0,0);
     }
   }
@@ -83,7 +89,8 @@ void putDataInSync(sharedMem *mem, int data){
       irq_unable();
       mem->flag = 1;
       mem->data = data;
-      mem->flag = 0;
+      mem->flag = 2;
+      print("putting %d \n", data,0,0);
       irq_enable();
       return;
     }else{

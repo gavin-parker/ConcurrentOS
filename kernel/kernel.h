@@ -20,6 +20,8 @@
 #include "P2.h"
 #include "terminal.h"
 #include "bottles.h"
+#include "philosophers.h"
+
 extern uint32_t tos_irq;
 
 

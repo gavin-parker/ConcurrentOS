@@ -6,11 +6,16 @@ int running = 0;
 void testChannel(){
   sharedMem * dat = getChannel();
   print("(term)flag: %d, data: %d\n",dat->flag,dat->data,0);
-  int * x = getDataInSync(dat);
-  print("(term)data: %d, \n",x,0,0);
   while(1){
-    //x = getDataInSync(&dat);
-    //print("incoming message %d \n",x,0,0);
+    if(dat->flag == 2){
+    print("terminal recieved %d\n",dat->data,0,0);
+    dat->flag == 0;
+  }else if(dat->flag == 3){
+    print("\n communication closed",0,0,0);
+    return;
+  }else{
+    yield();
+  }
   }
 }
 
@@ -33,6 +38,17 @@ void run(char *x){
     }else{
       running = i;
       yield();
+    }
+  }else if(strcomp(x,"philosophers") != -1){
+    int i = fork();
+    if(i == 0){
+      philosophers();
+      exit();
+    }else{
+      running = i;
+      while(1){
+      yield();
+    }
     }
   }else if(strcomp(x,"bottles") != -1){
     int i = fork();
