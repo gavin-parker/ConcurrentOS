@@ -2,21 +2,9 @@
 
 int running = 0;
 
-//recieves and prints out changes to shared memory
-void testChannel(){
-  sharedMem * dat = getChannel();
-  print("(term)flag: %d, data: %d\n",dat->flag,dat->data,0);
-  while(1){
-    if(dat->flag == 2){
-    print("terminal recieved %d\n",dat->data,0,0);
-    dat->flag == 0;
-  }else if(dat->flag == 3){
-    print("\n communication closed",0,0,0);
-    return;
-  }else{
-    yield();
-  }
-  }
+//sends data to pid
+void testChannel(int pid){
+  sendChan(pid, 5);
 }
 
 
@@ -67,7 +55,7 @@ void run(char *x){
     }else{
       running = i;
       yield();
-      testChannel();
+      testChannel(i);
     }
   }else if(strcomp(x, "quit") != -1){
     kill(running);

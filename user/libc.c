@@ -41,63 +41,53 @@ void kill(int p){
               : "r0");
 
 }
-//shares an address with process with id 'pid'
-void openChannel(int pid, int * add){
-  int r;
-
+//sends data to a process, wait until data received
+void sendChan(int pid, int dat){
+  int r = 0;
+  int flag = 0;
+  //send data
   asm volatile( "mov r0, %0 \n"
                 "mov r1, %1 \n"
                 "svc #6     \n"
-              :
-              : "r" (pid), "r" (add)
+              : "=r" (r)
+              : "r" (pid), "r" (dat)
               : "r0", "r1");
-  yield();
-
-}
-//gets an adress from another process openchannel must have been called by
-//the sender
-int getChannel(){
-  int r = 0;
-  while(r == 0){
+  print("sent data %d to %d \n",dat,pid,0);
+  //wait for confirmation
+  r = 0;
+  while(r != -1){
+    //print("waiting for confirmation\n",0,0,0);
+    yield();
   asm volatile("mov %0, r0 \n"
-               : "=r" (r));
-  yield();
-  }
-  return r;
-}
-//waits for the flag to be set in shared address space
-//then extracts data
-int getDataInSync(sharedMem *mem){
-  uint32_t *data = (uint32_t *) mem->data;
-  print("(get)data: %d\n", data ,0,0);
-  print("(get)flag: %d \n", mem->flag,0,0);
-  while(1){
-    if(mem->flag == 0){
-      int *r = mem->data;
-      print("getting %d\n",r,0,0);
-      return r;
-    }else{
-      yield();
-      //print("can't get: channel in use %d \n",  mem->flag,0,0);
-    }
-  }
-}
+                 : "=r" (r));
 
-void putDataInSync(sharedMem *mem, int data){
-  while(1){
-    if(mem->flag == 0){
-      irq_unable();
-      mem->flag = 1;
-      mem->data = data;
-      mem->flag = 2;
-      print("putting %d \n", data,0,0);
-      irq_enable();
-      return;
-    }else{
-      //print("can't put: channel in use %d\n",mem->flag,0,0);
-      yield();
-    }
+}
+print("got confirmation r:%d\n",r,0,0);
+}
+//gets data received by a channel && pid of sender
+int getChan(){
+  int r = 0;
+  int add = 0;
+  int sender = -1;
+  //get the data and sender
+  while(r == 0){
+    //print("waiting for data \n",0,0,0);
+    asm volatile("svc #7 \n"
+                 "mov %0, r0 \n"
+                 "mov %1, r1 \n"
+                : "=r" (r), "=r" (sender));
+    yield();
   }
+  print("got data %d, sender %d \n",r,sender,0);
+  //send a confirmation
+  asm volatile( "mov r0, %0 \n"
+                "mov r1, %1 \n"
+                "svc #6     \n"
+              : "=r" (r)
+              : "r" (sender), "r" (-1)
+              : "r0", "r1");
+
+  return r;
 }
 
 int strcomp(char* x, char* y){

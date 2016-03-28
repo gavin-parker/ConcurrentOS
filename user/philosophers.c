@@ -1,9 +1,5 @@
 #include "philosophers.h"
-typedef struct{
-  int flag;
-  //array of forks 1 = in use, 0 = free
-  int forks[5];
-} table;
+
 
 
 void startDining(char* name, int id){
@@ -11,7 +7,6 @@ void startDining(char* name, int id){
 print(name,0,0,0);
 print(" = %d has sat down \n",id,0,0);
 yield();
-table * tab = getChannel();
 print("%d got a channel \n",id,0,0);
 while(1){
   yield();
@@ -43,12 +38,8 @@ void philosophers(){
   yield();
 
 
-  table diningTable;
-  diningTable.flag = 0;
-
   for(int i=0;i<5;i++){
     print("opening channel to %d \n",i,0,0);
-    openChannel(i,&diningTable);
   }
 
 

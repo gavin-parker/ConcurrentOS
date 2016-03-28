@@ -17,7 +17,7 @@ int agetime = 0;
 int maxAge = 3;
 
 int rand = 0;
-
+int channels[programs][2];
 
 void incrementStack(){
     stack = stack + 0x00001000;
@@ -124,6 +124,7 @@ void createProcess(uint32_t pc, uint32_t cpsr, uint32_t priority  ){
   pcb[ pid ].ctx.pc   = pc;
   pcb[ pid ].ctx.sp   = stack + pid*0x00001000;
   print("created a process P%d\n",pid,0,0);
+  channels[pid][1] = -1;
 }
 
 //copy whole ctx to new process
@@ -144,6 +145,7 @@ int copyProcess(ctx_t * ctx){
   //memcpy(&stack + pid*0x00001000, &stack + currentPid*0x00001000, 0x00001000);
   //pcb[pid].ctx.sp += difference*0x00001000;
   pcb[pid].ctx.gpr[ 0 ] = 0;
+  channels[pid][1] = -1;
   return pid;
 }
 
@@ -192,9 +194,11 @@ int do_fork(ctx_t* ctx){
   return copyProcess(ctx);
 }
 
-void do_share(int pid, int add){
-  pcb[pid].ctx.gpr[0] = add;
+void do_share(int pid, int dat){
+  channels[pid][0] = dat;
+  channels[pid][1] = current->pid;
 }
+
 int do_exit(ctx_t* ctx){
   pid_t pid = current->pid;
   pcb[pid].priority = -1;
@@ -250,10 +254,24 @@ void kernel_handler_svc( ctx_t* ctx, uint32_t id ) {
     case 0x05 : {
       killProcess(ctx, ctx->gpr[0]);
       break;
+    }
     case 0x06 : {
-      do_share(ctx->gpr[0], ctx->gpr[1]);
+      int pid = ctx->gpr[0];
+      int dat = ctx->gpr[1];
+      do_share(pid, dat);
+      ctx->gpr[0] = 0;
       break;
     }
+    case 0x07 : {
+      int pid = current->pid;
+      if(channels[pid][1] == -1){
+        ctx->gpr[0] = 0;
+        ctx->gpr[1] = -1;
+      }else{
+        ctx->gpr[0] = channels[pid][0];
+        ctx->gpr[1] = channels[pid][1];
+      }
+      break;
     }
     default   : { // unknown
         PL011_putc( UART0, 'O' ); TIMER0->Timer1IntClr = 0x01;

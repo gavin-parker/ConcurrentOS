@@ -27,8 +27,8 @@ void print(char* x, int d1, int d2, int d3);
 int strcomp(char* x, char* y);
 void kill(int p);
 //IPC methods
-void openChannel(int pid, int * add);
-int getChannel();
+void sendChan(int pid, int dat);
+int getChan();
 void putDataInSync(sharedMem *mem, int data);
 int getDataInSync(sharedMem *mem);
 #endif
