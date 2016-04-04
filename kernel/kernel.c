@@ -195,10 +195,11 @@ int do_fork(ctx_t* ctx){
 }
 
 void do_share(int pid, int dat){
-  print("[0]:%d, [1]:%d \n",dat,current->pid,0);
+  //print("[0]:%d, [1]:%d \n",dat,current->pid,0);
   channels[pid][0] = dat;
   channels[pid][1] = current->pid;
-  print("[0]:%d, [1]:%d \n",channels[pid][0],channels[pid][1],0);
+  dat = channels[pid][0];
+  print("[0]:%d, [1]:%d \n",dat,channels[pid][1],0);
 
 }
 
@@ -259,9 +260,10 @@ void kernel_handler_svc( ctx_t* ctx, uint32_t id ) {
       break;
     }
     case 0x06 : {
-      int *pid = ctx->gpr[0];
-      print("pid:%d\n",*pid,0,0);
-      int *dat = pid[1];
+      int *pida = ctx->gpr[0];
+      int pid = *pida;
+      print("pid:%d\n",pid,0,0);
+      int *dat = pida[1];
       //int dat = ctx->gpr[1];
       do_share(pid, dat);
       ctx->gpr[0] = 0;
