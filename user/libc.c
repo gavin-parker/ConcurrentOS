@@ -52,17 +52,18 @@ void sendChan(int pid, int dat){
               :
               : "r" (&tuple)
               : "r0");
-  print("sent data %d to %d \n",tuple[1],tuple[0],0);
+  //print("sent data %d to %d \n",tuple[1],tuple[0],0);
   //wait for confirmation
   r = 0;
-  while(r != -1){
+  int sender = 0;
+  while(r == 0){
     //print("waiting for confirmation\n",0,0,0);
+    asm volatile("svc #7 \n"
+                 "mov %0, r0 \n"
+                 "mov %1, r1 \n"
+                : "=r" (r), "=r" (sender));
     yield();
-  asm volatile("mov %0, r0 \n"
-                 : "=r" (r));
-
 }
-print("got confirmation r:%d\n",r,0,0);
 }
 //gets data received by a channel && pid of sender
 int getChan(){
@@ -79,15 +80,18 @@ int getChan(){
     yield();
   }
   print("got data %d, sender %d \n",r,sender,0);
+  int result = r;
   //send a confirmation
+  int tuple[2] = {sender, -1};
   asm volatile( "mov r0, %0 \n"
-                "mov r1, %1 \n"
                 "svc #6     \n"
-              : "=r" (r)
-              : "r" (sender), "r" (-1)
-              : "r0", "r1");
+              :
+              : "r" (&tuple)
+              : "r0");
 
-  return r;
+  print("r = %d\n",result,0,0);
+  yield();
+  return result;
 }
 
 int strcomp(char* x, char* y){
