@@ -45,14 +45,14 @@ void kill(int p){
 void sendChan(int pid, int dat){
   int r = 0;
   int flag = 0;
+  int tuple[2] = {pid,dat};
   //send data
   asm volatile( "mov r0, %0 \n"
-                "mov r1, %1 \n"
                 "svc #6     \n"
-              : "=r" (r)
-              : "r" (pid), "r" (dat)
-              : "r0", "r1");
-  print("sent data %d to %d \n",dat,pid,0);
+              :
+              : "r" (&tuple)
+              : "r0");
+  print("sent data %d to %d \n",tuple[1],tuple[0],0);
   //wait for confirmation
   r = 0;
   while(r != -1){
