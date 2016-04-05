@@ -142,7 +142,7 @@ int copyProcess(ctx_t * ctx){
   pid_t currentPid = current->pid;
   //this bit is dodgy!
   int difference = (pid - currentPid);
-  //memcpy(&stack + pid*0x00001000, &stack + currentPid*0x00001000, 0x00001000);
+  memcpy(&stack + pid*0x00001000, &stack + currentPid*0x00001000, 0x00001000);
   //pcb[pid].ctx.sp += difference*0x00001000;
   pcb[pid].ctx.gpr[ 0 ] = 0;
   channels[pid][1] = -1;

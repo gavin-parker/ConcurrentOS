@@ -64,6 +64,7 @@ void sendChan(int pid, int dat){
                 : "=r" (r), "=r" (sender));
     yield();
 }
+print("send success \n",0,0,0);
 }
 //gets data received by a channel && pid of sender
 int getChan(){
@@ -95,6 +96,23 @@ int getChan(){
 }
 
 int strcomp(char* x, char* y){
+  while (*x != '\0') {
+       if (*y == '\0') return  1;
+       if (*y > *x)   return -1;
+       if (*x > *y)   return  1;
+
+       x++;
+       y++;
+   }
+
+   if (*y != '\0'){
+     return -1;
+   }
+
+   return 0;
+
+
+  /*
   while(*x != '\0' && *y != '\0' && *x != '\r' && *y != '\r'){
     if(*x != *y){
       return -1;
@@ -102,7 +120,7 @@ int strcomp(char* x, char* y){
     x++;
     y++;
   }
-  return 1;
+  return 1; */
 }
 int fork(){
   int r;

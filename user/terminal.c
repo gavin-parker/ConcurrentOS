@@ -9,7 +9,7 @@ void testChannel(int pid){
 
 
 void run(char *x){
-  if(strcomp(x,"p0") != -1){
+  if(strcomp(x,"p0") == 0){
     int i = fork();
     if(i == 0){
       P0();
@@ -18,7 +18,7 @@ void run(char *x){
       running = i;
       yield();
     }
-  }else if(strcomp(x,"p1") != -1){
+  }else if(strcomp(x,"p1") == 0){
     int i = fork();
     if(i == 0){
       P1();
@@ -27,7 +27,7 @@ void run(char *x){
       running = i;
       yield();
     }
-  }else if(strcomp(x,"philosophers") != -1){
+  }else if(strcomp(x,"philosophers") == 0){
     int i = fork();
     if(i == 0){
       philosophers();
@@ -38,7 +38,7 @@ void run(char *x){
       yield();
     }
     }
-  }else if(strcomp(x,"bottles") != -1){
+  }else if(strcomp(x,"bottles") == 0){
     int i = fork();
     if(i == 0){
       bottles();
@@ -47,7 +47,7 @@ void run(char *x){
       running = i;
       yield();
     }
-  }else if(strcomp(x,"rec") != -1){
+  }else if(strcomp(x,"rec") == 0){
     int i = fork();
     if(i == 0){
       rec();
@@ -57,10 +57,10 @@ void run(char *x){
       yield();
       testChannel(i);
     }
-  }else if(strcomp(x, "quit") != -1){
+  }else if(strcomp(x, "quit") == 0){
     kill(running);
     running = 0;
-  }else if(strcomp(x, "tasks") != -1){
+  }else if(strcomp(x, "tasks") == 0){
     print("Running: %d \n", running,0,0);
   }else{
     print(x,0,0,0);
