@@ -27,7 +27,7 @@ void run(char *x){
       running = i;
       yield();
     }
-  }else if(strcomp(x,"philosophers") == 0){
+  }else if(strcomp(x,"phil") == 0){
     int i = fork();
     if(i == 0){
       philosophers();

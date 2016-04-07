@@ -8,7 +8,7 @@
  * - employ a fixed-case of round-robin scheduling: no more processes
  *   can be created, and neither is able to complete.
  */
-#define programs 5
+#define programs 10
 pcb_t pcb[ programs ], *current = NULL;
 int processCount = 0;
 uint32_t stack = &tos_irq;
@@ -34,7 +34,6 @@ void age(){
 //breaks ties at 'random'
 // O(n) - very naughty!
 int getNextProcess(){
-
   int id = 0;
   uint32_t p = -1;
   for(int i=0;i< processCount;i++){
@@ -87,6 +86,7 @@ void scheduler( ctx_t* ctx , int immediate) {
    nextId = getNewProcess(id);
   }else{
    nextId = getNextProcess();
+   nextId = (id+1)%processCount;
 }
   memcpy( &pcb[ id ].ctx, ctx, sizeof( ctx_t ) );
   memcpy( ctx, &pcb[ nextId ].ctx, sizeof( ctx_t ) );
@@ -142,10 +142,11 @@ int copyProcess(ctx_t * ctx){
   pid_t currentPid = current->pid;
   //this bit is dodgy!
   int difference = (pid - currentPid);
-  memcpy(&stack + pid*0x00001000, &stack + currentPid*0x00001000, 0x00001000);
+  //memcpy(&stack + pid*0x00001000, &stack + currentPid*0x00001000, 0x00001000);
   //pcb[pid].ctx.sp += difference*0x00001000;
   pcb[pid].ctx.gpr[ 0 ] = 0;
   channels[pid][1] = -1;
+  //print("P%d",pid,0,0);
   return pid;
 }
 

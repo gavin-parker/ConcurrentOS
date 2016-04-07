@@ -4,12 +4,10 @@
 
 void rec(){
   print("Started rec \n",0,0,0);
-  getChan();
+  int a = getChan();
   print("rec done \n",0,0,0);
-  //print("rec got %d \n",a,0,0);
-  while(1){
-    
-  }
+  print("rec got %d \n",a,0,0);
+  exit();
 }
 
 void (*entry_rec)() = &rec;
