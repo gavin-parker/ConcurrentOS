@@ -47,51 +47,62 @@ void sendChan(int pid, int dat){
   int flag = 0;
   int tuple[2] = {pid,dat};
   //send data
+  print("sending data to %d \n",pid,0,0);
   asm volatile( "mov r0, %0 \n"
                 "svc #6     \n"
+                "mov r0, %1\n"
               :
-              : "r" (&tuple)
-              : "r0");
+              : "r" (&tuple), "r" (r)
+              : "r0", "r1");
   //print("sent data %d to %d \n",tuple[1],tuple[0],0);
   //wait for confirmation
+  //print("waiting for confirm\n",0,0,0);
+
   r = 0;
-  int sender = 0;
-  while(r == 0){
-    //print("waiting for confirmation\n",0,0,0);
+  int sender = -1;
+  while(sender == -1){
+    yield();
     asm volatile("svc #7 \n"
                  "mov %0, r0 \n"
                  "mov %1, r1 \n"
                 : "=r" (r), "=r" (sender));
-    yield();
+    }
+    //print("done send\n",0,0,0);
+return;
 }
-print("send success \n",0,0,0);
+
+int thisId(){
+  int r;
+  asm volatile("svc #8     \n" // dont forget to declare a new svc
+                "mov %0, r0 \n"
+              : "=r" (r));
+  return r;
 }
 //gets data received by a channel && pid of sender
 int getChan(){
-  int r = 0;
+  int r = -1;
   int add = 0;
   int sender = -1;
-  //get the data and sender
-  while(r == 0){
-    //print("waiting for data \n",0,0,0);
+  //get the data and
+  //print("waiting for data\n",0,0,0);
+  while(sender == -1){
+    yield();
     asm volatile("svc #7 \n"
                  "mov %0, r0 \n"
                  "mov %1, r1 \n"
                 : "=r" (r), "=r" (sender));
-    yield();
-  }
-  print("got data %d, sender %d \n",r,sender,0);
+    }
+
+  //print("got data %d, sender %d \n",r,sender,0);
   int result = r;
   //send a confirmation
-  int tuple[2] = {sender, -1};
+  int tuple[2] = {sender, 0};
   asm volatile( "mov r0, %0 \n"
                 "svc #6     \n"
               :
               : "r" (&tuple)
               : "r0");
 
-  print("r = %d\n",result,0,0);
-  yield();
   return result;
 }
 

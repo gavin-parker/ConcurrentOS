@@ -54,8 +54,10 @@ void run(char *x){
       exit();
     }else{
       running = i;
-      yield();
       testChannel(i);
+      while(1){
+      yield();
+    }
     }
   }else if(strcomp(x, "quit") == 0){
     kill(running);

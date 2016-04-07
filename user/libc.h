@@ -29,6 +29,5 @@ void kill(int p);
 //IPC methods
 void sendChan(int pid, int dat);
 int getChan();
-void putDataInSync(sharedMem *mem, int data);
-int getDataInSync(sharedMem *mem);
+int thisId();
 #endif

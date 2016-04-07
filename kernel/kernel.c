@@ -82,23 +82,24 @@ void scheduler( ctx_t* ctx , int immediate) {
   //print("entering scheduler\n",0,0,0);
   uint32_t id = current->pid;
   uint32_t nextId;
-  if(immediate){
-   nextId = getNewProcess(id);
-  }else{
+  if(immediate < 0){
    nextId = getNextProcess();
    nextId = (id+1)%processCount;
-}
+ }else{
+   nextId = immediate;
+ }
   memcpy( &pcb[ id ].ctx, ctx, sizeof( ctx_t ) );
   memcpy( ctx, &pcb[ nextId ].ctx, sizeof( ctx_t ) );
   current = &pcb[ nextId ];
   /*if(id != 0 && pcb[id].priority != -1){
     pcb[id].priority += 1;
   } */
+  //print("P%d",nextId,0,0);
 
 }
 void killProcess(ctx_t* ctx ,int p){
   pcb[p].priority = -1;
-  scheduler(ctx,0);
+  scheduler(ctx,-1);
 
 }
 
@@ -142,7 +143,7 @@ int copyProcess(ctx_t * ctx){
   pid_t currentPid = current->pid;
   //this bit is dodgy!
   int difference = (pid - currentPid);
-  //memcpy(&stack + pid*0x00001000, &stack + currentPid*0x00001000, 0x00001000);
+  memcpy(&stack + pid*0x00001000, &stack + currentPid*0x00001000, 0x00001000);
   //pcb[pid].ctx.sp += difference*0x00001000;
   pcb[pid].ctx.gpr[ 0 ] = 0;
   channels[pid][1] = -1;
@@ -199,7 +200,6 @@ void do_share(int pid, int dat){
   //print("[0]:%d, [1]:%d \n",dat,current->pid,0);
   channels[pid][0] = dat;
   channels[pid][1] = current->pid;
-  dat = channels[pid][0];
   //print("[0]:%d, [1]:%d \n",dat,channels[pid][1],0);
 
 }
@@ -207,7 +207,7 @@ void do_share(int pid, int dat){
 int do_exit(ctx_t* ctx){
   pid_t pid = current->pid;
   pcb[pid].priority = -1;
-  scheduler(ctx,0);
+  scheduler(ctx,-1);
   return 0;
 }
 
@@ -221,7 +221,7 @@ void kernel_handler_svc( ctx_t* ctx, uint32_t id ) {
    */
   switch( id ) {
     case 0x00 : { // yield()
-      scheduler( ctx ,1);
+      scheduler( ctx ,-1);
       break;
     }
     case 0x01 : { // write( fd, x, n )
@@ -267,7 +267,7 @@ void kernel_handler_svc( ctx_t* ctx, uint32_t id ) {
       int *dat = pida[1];
       //int dat = ctx->gpr[1];
       do_share(pid, dat);
-      ctx->gpr[0] = 0;
+      //scheduler(ctx,pid);
       break;
     }
     case 0x07 : {
@@ -279,7 +279,13 @@ void kernel_handler_svc( ctx_t* ctx, uint32_t id ) {
       }else{
         ctx->gpr[0] = channels[pid][0];
         ctx->gpr[1] = channels[pid][1];
+        channels[pid][1] = -1;
       }
+      break;
+    }
+    case 0x08 : {
+      int pid = current->pid;
+      ctx->gpr[0] = pid;
       break;
     }
     default   : { // unknown
@@ -302,7 +308,7 @@ void kernel_handler_irq(ctx_t* ctx) {
 
   if( id == GIC_SOURCE_TIMER0 ) {
     rand++;
-    scheduler(ctx,0);
+    scheduler(ctx,-1);
     agetime++;
     if(agetime >= maxAge){
       age();
