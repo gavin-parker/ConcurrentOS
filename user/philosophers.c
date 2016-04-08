@@ -32,23 +32,50 @@ int makePhilosopher(char* name, int id, int table){
 
 void philosophers(){
   int id = thisId();
-  int ids[5];
+  int ids[5][2];
+  int forks[5] = {1,1,1,1,1};
   print("created table at %d\n",id,0,0);
-  ids[0] = makePhilosopher("Aristotle", 0,id);
-  ids[1] = makePhilosopher("Kant", 1,id);
-  ids[2] = makePhilosopher("Marx", 2,id);
-  ids[3] = makePhilosopher("Russell", 3,id);
-  ids[4] = makePhilosopher("Spinoza", 4,id);
+  ids[0][0] = makePhilosopher("Aristotle", 0,id);
+  ids[1][0] = makePhilosopher("Kant", 1,id);
+  ids[2][0] = makePhilosopher("Marx", 2,id);
+  ids[3][0] = makePhilosopher("Russell", 3,id);
+  ids[4][0] = makePhilosopher("Spinoza", 4,id);
 
   int message = 0;
-  int seat = ids[0];
-  print("sending start to %d \n",seat,0,0);
-  sendChan(seat,1);
-  sendChan(ids[1],1);
-  sendChan(ids[2],2);
-
+  ids[0][1] = 2;
+  ids[1][1] = 1;
+  ids[2][1] = 1;
+  ids[3][1] = 1;
+  ids[4][1] = 0;
   print("all philosophers added!\n",0,0,0);
+  sendChan(ids[0][0],1);
   while(1){
+  for(int i=0;i<5;i++){
+    if(ids[i][1] < 2){
+      //needs a fork!!
+      if(forks[i] && ids[(i+4)%5][1] > 0){
+        //if dirty, take left fork
+        ids[i][1]++;
+        forks[i] = 0;
+        ids[(i+4)%5][1]--;
+      }else if(forks[(i+1)%5] && ids[(i+1)%5][1] > 0){
+        //if dirty, take right fork
+        ids[i][1]++;
+        forks[(i+1)%5] = 0;
+        ids[(i+1)%5][1]--;
+      }
+    }
+
+  }
+  for(int i=0;i<5;i++){
+    if(ids[i][1] == 2){
+      sendChan(ids[i][0],1);
+      yield();
+      sendChan(ids[i][0],2);
+      forks[i] = 1;
+      forks[(i+1)%5] = 1;
+    }
+  }
 
   }
 

@@ -97,8 +97,8 @@ int getChan(){
   int result = r;
   //send a confirmation
   int tuple[2] = {sender, sender};    //this not working??
-  print("sender: %d \n",tuple[1],0,0);
-
+  //print("sender: %d \n",tuple[1],0,0);
+  yield();
   asm volatile( "mov r0, %0 \n"
                 "svc #6     \n"
               :
