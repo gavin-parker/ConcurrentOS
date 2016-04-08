@@ -42,6 +42,7 @@ void run(char *x){
     int i = fork();
     if(i == 0){
       bottles();
+      print("done bottles \n",0,0,0);
       exit();
     }else{
       running = i;

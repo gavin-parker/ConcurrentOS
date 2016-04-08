@@ -142,14 +142,19 @@ int copyProcess(ctx_t * ctx){
   pcb[pid].priority = 0;
   pid_t currentPid = current->pid;
   //this bit is dodgy!
-  int difference = (pid - currentPid);
-  memcpy(&stack + pid*0x00001000, &stack + currentPid*0x00001000, 0x00001000);
-  //pcb[pid].ctx.sp += difference*0x00001000;
+  uint32_t oldStack = stack + (currentPid-1)*0x00001000;
+  uint32_t newStack = stack + (pid-1)*0x00001000;
+  memcpy(newStack, oldStack, 0x00001000);
+  uint32_t sp = ctx->sp;
+  uint32_t relativeSP = oldStack - sp; //dodgy!!
+  pcb[pid].ctx.sp = newStack - relativeSP;
   pcb[pid].ctx.gpr[ 0 ] = 0;
   channels[pid][1] = -1;
   //print("P%d",pid,0,0);
   return pid;
 }
+
+
 
 void kernel_handler_rst( ctx_t* ctx              ) {
 
@@ -274,7 +279,6 @@ void kernel_handler_svc( ctx_t* ctx, uint32_t id ) {
       int pid = current->pid;
 
       if(channels[pid][1] == -1){
-        ctx->gpr[0] = 0;
         ctx->gpr[1] = -1;
       }else{
         ctx->gpr[0] = channels[pid][0];

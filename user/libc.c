@@ -47,7 +47,7 @@ void sendChan(int pid, int dat){
   int flag = 0;
   int tuple[2] = {pid,dat};
   //send data
-  print("sending data to %d \n",pid,0,0);
+  //print("sending data to %d \n",pid,0,0);
   asm volatile( "mov r0, %0 \n"
                 "svc #6     \n"
                 "mov r0, %1\n"
@@ -61,13 +61,14 @@ void sendChan(int pid, int dat){
   r = 0;
   int sender = -1;
   while(sender == -1){
+    //write(0,"/",1);
     yield();
     asm volatile("svc #7 \n"
                  "mov %0, r0 \n"
                  "mov %1, r1 \n"
                 : "=r" (r), "=r" (sender));
     }
-    //print("done send\n",0,0,0);
+    //print("done send to %d\n",pid,0,0);
 return;
 }
 
@@ -86,13 +87,13 @@ int getChan(){
   //get the data and
   //print("waiting for data\n",0,0,0);
   while(sender == -1){
+    //write(0,".",1);
     yield();
     asm volatile("svc #7 \n"
                  "mov %0, r0 \n"
                  "mov %1, r1 \n"
                 : "=r" (r), "=r" (sender));
     }
-
   //print("got data %d, sender %d \n",r,sender,0);
   int result = r;
   //send a confirmation
@@ -138,6 +139,7 @@ int fork(){
   asm volatile("svc #2     \n" // dont forget to declare a new svc
                 "mov %0, r0 \n"
               : "=r" (r));
+  print("forked to p%d \n",r,0,0);
   return r;
 }
 int clone(){
