@@ -56,19 +56,19 @@ void sendChan(int pid, int dat){
               : "r0", "r1");
   //print("sent data %d to %d \n",tuple[1],tuple[0],0);
   //wait for confirmation
-  //print("waiting for confirm\n",0,0,0);
+  print("waiting for confirm\n",0,0,0);
 
   r = 0;
   int sender = -1;
   while(sender == -1){
     //write(0,"/",1);
-    yield();
     asm volatile("svc #7 \n"
                  "mov %0, r0 \n"
                  "mov %1, r1 \n"
                 : "=r" (r), "=r" (sender));
+    //write(0,",",1);
+    yield();
     }
-    //print("done send to %d\n",pid,0,0);
 return;
 }
 
@@ -93,16 +93,20 @@ int getChan(){
                  "mov %0, r0 \n"
                  "mov %1, r1 \n"
                 : "=r" (r), "=r" (sender));
+    //write(0,".",1);
     }
   //print("got data %d, sender %d \n",r,sender,0);
   int result = r;
   //send a confirmation
-  int tuple[2] = {sender, 0};
+  print("sender: %d \n",sender,0,0);
+  int tuple[2] = {sender, sender};
+
   asm volatile( "mov r0, %0 \n"
                 "svc #6     \n"
+                "mov r0, %1\n"
               :
-              : "r" (&tuple)
-              : "r0");
+              : "r" (&tuple), "r" (r)
+              : "r0", "r1");
 
   return result;
 }
@@ -139,7 +143,6 @@ int fork(){
   asm volatile("svc #2     \n" // dont forget to declare a new svc
                 "mov %0, r0 \n"
               : "=r" (r));
-  print("forked to p%d \n",r,0,0);
   return r;
 }
 int clone(){

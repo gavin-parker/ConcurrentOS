@@ -144,6 +144,7 @@ int copyProcess(ctx_t * ctx){
   //this bit is dodgy!
   uint32_t oldStack = stack + (currentPid-1)*0x00001000;
   uint32_t newStack = stack + (pid-1)*0x00001000;
+  memset(newStack, 0, 0x00001000);
   memcpy(newStack, oldStack, 0x00001000);
   uint32_t sp = ctx->sp;
   uint32_t relativeSP = oldStack - sp; //dodgy!!
@@ -205,15 +206,20 @@ void do_share(int pid, int dat){
   //print("[0]:%d, [1]:%d \n",dat,current->pid,0);
   channels[pid][0] = dat;
   channels[pid][1] = current->pid;
-  //print("[0]:%d, [1]:%d \n",dat,channels[pid][1],0);
+  print("[%d][0]:%d, [1]:%d \n",pid,dat,channels[pid][1]);
 
 }
 
 int do_exit(ctx_t* ctx){
   pid_t pid = current->pid;
+  memset( &pcb[ pid ], 0, sizeof( pcb_t ) );
   pcb[pid].priority = -1;
+  channels[pid][1] = -1;
   scheduler(ctx,-1);
   return 0;
+}
+void stop(){
+
 }
 
 void kernel_handler_svc( ctx_t* ctx, uint32_t id ) {
@@ -271,16 +277,21 @@ void kernel_handler_svc( ctx_t* ctx, uint32_t id ) {
       //print("pid:%d\n",pid,0,0);
       int *dat = pida[1];
       //int dat = ctx->gpr[1];
-      do_share(pid, dat);
-      //scheduler(ctx,pid);
+      print(" p%d sharing %d with %d \n",current->pid,dat,pid);
+      channels[pid][0] = dat;
+      channels[pid][1] = current->pid;
       break;
     }
     case 0x07 : {
+      stop();
       int pid = current->pid;
 
       if(channels[pid][1] == -1){
+        ctx->gpr[0] = 0;
         ctx->gpr[1] = -1;
       }else{
+        print("p%d getting %d from %d\n",pid,channels[pid][0], channels[pid][1]);
+        int sender = channels[pid][1];
         ctx->gpr[0] = channels[pid][0];
         ctx->gpr[1] = channels[pid][1];
         channels[pid][1] = -1;

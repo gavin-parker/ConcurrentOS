@@ -7,7 +7,10 @@ void rec(){
   int a = getChan();
   print("rec done \n",0,0,0);
   print("rec got %d \n",a,0,0);
-  exit();
+  while(1){
+    
+  }
+  //exit();
 }
 
 void (*entry_rec)() = &rec;
