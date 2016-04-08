@@ -7,10 +7,9 @@ int makePhilosopher(char* name, int id, int table){
   if(i == 0){
     int tableId = getChan();
     int action = 0;
-    action = getChan();
-    print("action = %d\n",action,0,0);
   while(1){
     //attempt to eat
+    action = getChan();
     if(action == 1){
       print(name,0,0,0);
       print(" is eating \n",0,0,0);
@@ -20,7 +19,6 @@ int makePhilosopher(char* name, int id, int table){
     }
 
   }
-  exit();
 }else{
   yield();
   print("sending table id to %d \n",i,0,0);
@@ -46,6 +44,9 @@ void philosophers(){
   int seat = ids[0];
   print("sending start to %d \n",seat,0,0);
   sendChan(seat,1);
+  sendChan(ids[1],1);
+  sendChan(ids[2],2);
+
   print("all philosophers added!\n",0,0,0);
   while(1){
 

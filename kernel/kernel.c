@@ -271,30 +271,31 @@ void kernel_handler_svc( ctx_t* ctx, uint32_t id ) {
       killProcess(ctx, ctx->gpr[0]);
       break;
     }
+    //SEND CHANNEL
     case 0x06 : {
       int *pida = ctx->gpr[0];
       int pid = *pida;
       //print("pid:%d\n",pid,0,0);
       int *dat = pida[1];
       //int dat = ctx->gpr[1];
-      print(" p%d sharing %d with %d \n",current->pid,dat,pid);
+      //print(" p%d sharing %d with %d \n",current->pid,dat,pid);
       channels[pid][0] = dat;
       channels[pid][1] = current->pid;
       break;
     }
+    // GET CHANNEL
     case 0x07 : {
-      stop();
       int pid = current->pid;
-
       if(channels[pid][1] == -1){
         ctx->gpr[0] = 0;
         ctx->gpr[1] = -1;
       }else{
-        print("p%d getting %d from %d\n",pid,channels[pid][0], channels[pid][1]);
+        //print("p%d getting %d from %d\n",pid,channels[pid][0], channels[pid][1]);
         int sender = channels[pid][1];
         ctx->gpr[0] = channels[pid][0];
         ctx->gpr[1] = channels[pid][1];
         channels[pid][1] = -1;
+        channels[pid][0] = -1;
       }
       break;
     }

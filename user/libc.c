@@ -50,13 +50,12 @@ void sendChan(int pid, int dat){
   //print("sending data to %d \n",pid,0,0);
   asm volatile( "mov r0, %0 \n"
                 "svc #6     \n"
-                "mov r0, %1\n"
               :
-              : "r" (&tuple), "r" (r)
-              : "r0", "r1");
+              : "r" (&tuple)
+              : "r0");
   //print("sent data %d to %d \n",tuple[1],tuple[0],0);
   //wait for confirmation
-  print("waiting for confirm\n",0,0,0);
+  //print("waiting for confirm\n",0,0,0);
 
   r = 0;
   int sender = -1;
@@ -66,7 +65,6 @@ void sendChan(int pid, int dat){
                  "mov %0, r0 \n"
                  "mov %1, r1 \n"
                 : "=r" (r), "=r" (sender));
-    //write(0,",",1);
     yield();
     }
 return;
@@ -98,15 +96,14 @@ int getChan(){
   //print("got data %d, sender %d \n",r,sender,0);
   int result = r;
   //send a confirmation
-  print("sender: %d \n",sender,0,0);
-  int tuple[2] = {sender, sender};
+  int tuple[2] = {sender, sender};    //this not working??
+  print("sender: %d \n",tuple[1],0,0);
 
   asm volatile( "mov r0, %0 \n"
                 "svc #6     \n"
-                "mov r0, %1\n"
               :
-              : "r" (&tuple), "r" (r)
-              : "r0", "r1");
+              : "r" (&tuple)
+              : "r0");
 
   return result;
 }
