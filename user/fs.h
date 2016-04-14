@@ -1,11 +1,11 @@
 #include <stddef.h>
 #include <stdint.h>
-
+#include "libc.h"
 
 void testFS();
 
 typedef struct{
   char* name;
-  int* add;
+  uint32_t add;
   int size;
-} ft;
+} fd_t;
