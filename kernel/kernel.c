@@ -292,11 +292,13 @@ void kernel_handler_svc( ctx_t* ctx, uint32_t id ) {
           if(channels[pid][i] != -1){
             dat = channels[pid][i];
             channels[i][pid] = 1;
+            channels[pid][i] = -1;
             break;
           }
         }
     }else{
       dat = channels[pid][chan];
+      channels[pid][chan] = -1;
     }
     ctx->gpr[0] = dat;
       break;
