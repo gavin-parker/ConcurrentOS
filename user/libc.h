@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "PL011.h"
-
+#include "fs.h"
 
 //structure to share data between processes
 //only use handler methods to get data !!

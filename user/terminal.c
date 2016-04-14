@@ -62,6 +62,15 @@ void run(char *x){
       testChannel(i);
 
     }
+  }else if(strcomp(x,"fs") == 0){
+    int i = fork();
+    if(i == 0){
+      testFS();
+      close();
+    }else{
+      running = i;
+      yield();
+    }
   }else if(strcomp(x, "quit") == 0){
     kill(running);
     running = 0;
