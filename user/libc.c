@@ -57,15 +57,16 @@ void sendChan(int pid, int dat){
   //wait for confirmation
   //print("waiting for confirm\n",0,0,0);
 
-  r = 0;
-  int sender = -1;
-  while(sender == -1){
+  r = -1;
+  while(r == -1){
     //write(0,"/",1);
-    asm volatile("svc #7 \n"
-                 "mov %0, r0 \n"
-                 "mov %1, r1 \n"
-                : "=r" (r), "=r" (sender));
     yield();
+    asm volatile("mov r0, %1\n"
+                 "svc #7 \n"
+                 "mov %0, r0 \n"
+                : "=r" (r)
+                : "r" (pid)
+                : "r0");
     }
 return;
 }
@@ -78,25 +79,28 @@ int thisId(){
   return r;
 }
 //gets data received by a channel && pid of sender
-int getChan(){
+int getChan(int chan){
   int r = -1;
   int add = 0;
   int sender = -1;
   //get the data and
   //print("waiting for data\n",0,0,0);
-  while(sender == -1){
+  while(r == -1){
     //write(0,".",1);
     yield();
-    asm volatile("svc #7 \n"
+    asm volatile("mov r0, %1\n"
+                 "svc #7 \n"
                  "mov %0, r0 \n"
-                 "mov %1, r1 \n"
-                : "=r" (r), "=r" (sender));
+                : "=r" (r)
+                : "r" (chan)
+                : "r0");
     //write(0,".",1);
     }
+    int result = r;
+  if(chan != -1){
   //print("got data %d, sender %d \n",r,sender,0);
-  int result = r;
   //send a confirmation
-  int tuple[2] = {sender, sender};    //this not working??
+  int tuple[2] = {chan, 1};    //this not working??
   //print("sender: %d \n",tuple[1],0,0);
   yield();
   asm volatile( "mov r0, %0 \n"
@@ -104,7 +108,7 @@ int getChan(){
               :
               : "r" (&tuple)
               : "r0");
-
+}
   return result;
 }
 

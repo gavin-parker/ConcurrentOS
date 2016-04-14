@@ -28,6 +28,6 @@ int strcomp(char* x, char* y);
 void kill(int p);
 //IPC methods
 void sendChan(int pid, int dat);
-int getChan();
+int getChan(int chan);
 int thisId();
 #endif

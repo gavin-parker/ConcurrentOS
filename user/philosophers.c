@@ -31,6 +31,7 @@ int makePhilosopher(char* name, int id, int table){
 
 
 void philosophers(){
+
   int id = thisId();
   int ids[5][2];
   int forks[5] = {1,1,1,1,1};

@@ -4,7 +4,11 @@ int running = 0;
 
 //sends data to pid
 void testChannel(int pid){
-  sendChan(pid, 5);
+  sendChan(pid, 0);
+  sendChan(pid, 6);
+
+  int a = getChan(pid);
+  print("terminal got %d from %d",a,pid,0);
 }
 
 

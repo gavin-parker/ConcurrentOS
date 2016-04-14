@@ -17,7 +17,7 @@ int agetime = 0;
 int maxAge = 3;
 
 int rand = 0;
-int channels[programs][2];
+int channels[programs][programs];
 
 void incrementStack(){
     stack = stack + 0x00001000;
@@ -115,6 +115,12 @@ int getSlot(){
   return (processCount-1);
 }
 
+void wipeChannels(uint32_t pid){
+  for(int i=0;i < programs;i++){
+    channels[pid][i] = -1;
+  }
+}
+
 //finds the next free slot in the pcb table and copies in the new process
 void createProcess(uint32_t pc, uint32_t cpsr, uint32_t priority  ){
   pid_t pid = getSlot();
@@ -125,7 +131,7 @@ void createProcess(uint32_t pc, uint32_t cpsr, uint32_t priority  ){
   pcb[ pid ].ctx.pc   = pc;
   pcb[ pid ].ctx.sp   = stack + pid*0x00001000;
   print("created a process P%d\n",pid,0,0);
-  channels[pid][1] = -1;
+  wipeChannels(pid);
 }
 
 //copy whole ctx to new process
@@ -150,7 +156,7 @@ int copyProcess(ctx_t * ctx){
   uint32_t relativeSP = oldStack - sp; //dodgy!!
   pcb[pid].ctx.sp = newStack - relativeSP;
   pcb[pid].ctx.gpr[ 0 ] = 0;
-  channels[pid][1] = -1;
+  wipeChannels(pid);
   //print("P%d",pid,0,0);
   return pid;
 }
@@ -202,19 +208,12 @@ int do_fork(ctx_t* ctx){
   return copyProcess(ctx);
 }
 
-void do_share(int pid, int dat){
-  //print("[0]:%d, [1]:%d \n",dat,current->pid,0);
-  channels[pid][0] = dat;
-  channels[pid][1] = current->pid;
-  print("[%d][0]:%d, [1]:%d \n",pid,dat,channels[pid][1]);
-
-}
 
 int do_exit(ctx_t* ctx){
   pid_t pid = current->pid;
   memset( &pcb[ pid ], 0, sizeof( pcb_t ) );
   pcb[pid].priority = -1;
-  channels[pid][1] = -1;
+  wipeChannels(pid);
   scheduler(ctx,-1);
   return 0;
 }
@@ -277,26 +276,29 @@ void kernel_handler_svc( ctx_t* ctx, uint32_t id ) {
       int pid = *pida;
       //print("pid:%d\n",pid,0,0);
       int *dat = pida[1];
-      //int dat = ctx->gpr[1];
       //print(" p%d sharing %d with %d \n",current->pid,dat,pid);
-      channels[pid][0] = dat;
-      channels[pid][1] = current->pid;
+      int thisPid = current->pid;
+      channels[pid][thisPid] = dat;
       break;
     }
     // GET CHANNEL
     case 0x07 : {
       int pid = current->pid;
-      if(channels[pid][1] == -1){
-        ctx->gpr[0] = 0;
-        ctx->gpr[1] = -1;
-      }else{
-        //print("p%d getting %d from %d\n",pid,channels[pid][0], channels[pid][1]);
-        int sender = channels[pid][1];
-        ctx->gpr[0] = channels[pid][0];
-        ctx->gpr[1] = channels[pid][1];
-        channels[pid][1] = -1;
-        channels[pid][0] = -1;
-      }
+      int chan = ctx->gpr[0];
+      int dat = -1;
+      int sender = -1;
+      if(chan == -1){
+        for(int i=0;i<programs;i++){
+          if(channels[pid][i] != -1){
+            dat = channels[pid][i];
+            channels[i][pid] = 1;
+            break;
+          }
+        }
+    }else{
+      dat = channels[pid][chan];
+    }
+    ctx->gpr[0] = dat;
       break;
     }
     case 0x08 : {
