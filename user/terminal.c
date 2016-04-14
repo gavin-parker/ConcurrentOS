@@ -17,7 +17,7 @@ void run(char *x){
     int i = fork();
     if(i == 0){
       P0();
-      exit();
+      close();
     }else{
       running = i;
       yield();
@@ -26,7 +26,7 @@ void run(char *x){
     int i = fork();
     if(i == 0){
       P1();
-      exit();
+      close();
     }else{
       running = i;
       yield();
@@ -35,7 +35,7 @@ void run(char *x){
     int i = fork();
     if(i == 0){
       philosophers();
-      exit();
+      close();
     }else{
       running = i;
       while(1){
@@ -47,7 +47,7 @@ void run(char *x){
     if(i == 0){
       bottles();
       print("done bottles \n",0,0,0);
-      exit();
+      close();
     }else{
       running = i;
       yield();
@@ -56,7 +56,7 @@ void run(char *x){
     int i = fork();
     if(i == 0){
       rec();
-      exit();
+      close();
     }else{
       running = i;
       testChannel(i);

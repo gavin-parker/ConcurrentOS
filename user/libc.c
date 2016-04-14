@@ -150,7 +150,7 @@ int clone(){
   asm volatile("svc #5     \n");
   return 0;
 }
-int exit(){
+int close(){
   asm volatile("svc #3     \n");
   return 0;
 }

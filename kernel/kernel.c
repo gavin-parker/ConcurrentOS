@@ -16,7 +16,7 @@ uint32_t stack = &tos_irq;
 int agetime = 0;
 int maxAge = 3;
 
-int rand = 0;
+int randCount = 0;
 int channels[programs][programs];
 
 void incrementStack(){
@@ -31,7 +31,7 @@ void age(){
 }
 
 //get the index of the proc with highest priority
-//breaks ties at 'random'
+//breaks ties at 'randCountom'
 // O(n) - very naughty!
 int getNextProcess(){
   int id = 0;
@@ -40,7 +40,7 @@ int getNextProcess(){
     if(pcb[i].priority < p){
       p = pcb[i].priority;
       id = i;
-    }else if((pcb[i].priority == p) && ((pcb[i].ctx.sp / 8) % 2 == (rand % 2)) ){
+    }else if((pcb[i].priority == p) && ((pcb[i].ctx.sp / 8) % 2 == (randCount % 2)) ){
       p = pcb[i].priority;
       id = i;
     }
@@ -66,7 +66,7 @@ int getNewProcess(int this){
     if(pcb[i].priority < p){
       p = pcb[i].priority;
       id = i;
-    }else if((pcb[i].priority == p) && ((pcb[i].ctx.sp / 8) % 2 == (rand % 2)) ){
+    }else if((pcb[i].priority == p) && ((pcb[i].ctx.sp / 8) % 2 == (randCount % 2)) ){
       p = pcb[i].priority;
       id = i;
     }
@@ -222,7 +222,7 @@ void stop(){
 }
 
 void kernel_handler_svc( ctx_t* ctx, uint32_t id ) {
-  /* Based on the identified encoded as an immediate operand in the
+  /* Based on the identified encoded as an immediate operandCount in the
    * instruction,
    *
    * - read  the arguments from preserved usr mode registers,
@@ -327,7 +327,7 @@ void kernel_handler_irq(ctx_t* ctx) {
   // Step 4: handle the interrupt, then clear (or reset) the source.
 
   if( id == GIC_SOURCE_TIMER0 ) {
-    rand++;
+    randCount++;
     scheduler(ctx,-1);
     agetime++;
     if(agetime >= maxAge){
