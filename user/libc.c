@@ -112,6 +112,16 @@ int getChan(int chan){
   return result;
 }
 
+int strlen(char* x){
+  int len=0;
+  while(*x != '\0'){
+    x++;
+    len++;
+  }
+  len++;
+  return len;
+}
+
 int strcomp(char* x, char* y){
   while (*x != '\0') {
        if (*y == '\0') return  1;

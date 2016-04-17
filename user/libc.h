@@ -29,4 +29,5 @@ void kill(int p);
 void sendChan(int pid, int dat);
 int getChan(int chan);
 int thisId();
+//int strlen(char* x);
 #endif

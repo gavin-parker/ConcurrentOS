@@ -15,82 +15,127 @@ uint32_t stack = &tos_irq;
 //maxAge is the number of fires of the timer before ageing the processes
 int agetime = 0;
 int maxAge = 3;
-
 int randCount = 0;
 int channels[programs][programs];
+int queues[3][programs];
+int rounds = 0;
+int currentQueue = 0;
+int queueIndex = 0;
+
+//Empties the process queues
+void clearQueues(){
+  for(int i=0;i<3;i++){
+    for(int j=0;j<programs;j++){
+      queues[i][j] = -1;
+    }
+  }
+}
+
+//adds a process to a queue
+void addToQueue(int q, int pid){
+  for(int i=0;i<programs;i++){
+      if(queues[q][i] == -1){
+        queues[q][i] = pid;
+        return;
+      }
+  }
+}
+//remove all instances of a process from a queue
+void removeFromQueue(int q, int pid){
+  for(int i=0;i<programs;i++){
+      if(queues[q][i] == pid){
+        queues[q][i] = -1;
+      }
+  }
+}
 
 void incrementStack(){
     stack = stack + 0x00001000;
 }
-void age(){
-  for(int i=0;i < programs; i++){
-    if(pcb[i].priority != -1 && pcb[i].priority > 0){
-      pcb[i].priority -= 1;
-    }
+
+//finds the number of processes in a queue
+int members(int q){
+  int a = 0;
+  for(int i=0;i<programs;i++){
+    if(queues[q][i] > -1){
+    a += 1;
   }
+  }
+  return a;
 }
 
-//get the index of the proc with highest priority
-//breaks ties at 'randCountom'
-// O(n) - very naughty!
-int getNextProcess(){
-  int id = 0;
-  uint32_t p = -1;
-  for(int i=0;i< processCount;i++){
-    if(pcb[i].priority < p){
-      p = pcb[i].priority;
-      id = i;
-    }else if((pcb[i].priority == p) && ((pcb[i].ctx.sp / 8) % 2 == (randCount % 2)) ){
-      p = pcb[i].priority;
-      id = i;
-    }
-  }
-  return id;
-}
-
-//increase the priority of a process with index i
-void increasePriority( int i, int age){
-  if(age > pcb[i].priority){
-    pcb[i].priority = 0;
+//move to next queue
+void changeQueue(){
+  int nextQueue = (currentQueue+1)%3;
+  if(members(nextQueue) > 0){
+    currentQueue = nextQueue;
+    queueIndex = 0;
+  }else if(members((nextQueue+1)%3)>0){
+    currentQueue = (nextQueue+1)%3;
+    queueIndex = 0;
+  }else if(members(currentQueue)>0){
+    queueIndex = 0;
   }else{
-  pcb[i].priority -= age;
-}
-  return;
-}
+    print("ALL QUEUES EMPTY. OH DEAR :( \n",0,0,0);
+    while(1){
 
-int getNewProcess(int this){
-  int id = 0;
-  uint32_t p = -1;
-  for(int i=0;i< processCount;i++){
-    if(i != this){
-    if(pcb[i].priority < p){
-      p = pcb[i].priority;
-      id = i;
-    }else if((pcb[i].priority == p) && ((pcb[i].ctx.sp / 8) % 2 == (randCount % 2)) ){
-      p = pcb[i].priority;
-      id = i;
     }
   }
-  }
-  return id;
+  //print("Moving to q%d \n",currentQueue,0,0);
 }
+
+//Get the pid of the next process in queue, or move to next queue if empty
+int getNextProcess(int pid){
+  if(members(currentQueue) == 0){
+    changeQueue();
+    rounds = 0;
+  }
+  //Queue has at least 1 member
+  int j = 0;
+  int first = -1;
+  //find next position in queue and first process
+  for(int i=0;i < programs;i++){
+    if(queues[currentQueue][i] != -1){
+      first = queues[currentQueue][i];
+    }
+    if(queues[currentQueue][i] == pid){
+      j = (i+1)%programs;
+      break;
+    }
+  }
+  //Try and get next item in queue
+  for(;j<programs;j++){
+    if(queues[currentQueue][j] != -1){
+      return queues[currentQueue][j];
+    }
+  }
+  //otherwise choose from front of queue
+  return first;
+
+}
+
+
 /*
   My custom scheduler assigns a priority to each process - lower being high priority.
   processes with priorty '-1' i.e maxINT are finished and can be overwritten
 */
-void scheduler( ctx_t* ctx , int immediate) {
+void scheduler( ctx_t* ctx) {
   //print("entering scheduler\n",0,0,0);
   uint32_t id = current->pid;
   uint32_t nextId;
-  if(immediate < 0){
-   nextId = getNextProcess();
-   nextId = (id+1)%processCount;
- }else{
-   nextId = immediate;
- }
+  nextId = getNextProcess(id);
+
+
   memcpy( &pcb[ id ].ctx, ctx, sizeof( ctx_t ) );
   memcpy( ctx, &pcb[ nextId ].ctx, sizeof( ctx_t ) );
   current = &pcb[ nextId ];
+
+  pcb[id].priority++;
+  if(pcb[id].priority >= maxAge){
+    removeFromQueue(currentQueue,id);
+    removeFromQueue((currentQueue+2)%3,id);
+    addToQueue((currentQueue+1)%3,id);
+  }
   /*if(id != 0 && pcb[id].priority != -1){
     pcb[id].priority += 1;
   } */
@@ -98,8 +143,9 @@ void scheduler( ctx_t* ctx , int immediate) {
 
 }
 void killProcess(ctx_t* ctx ,int p){
+  removeFromQueue(pcb[p].priority,p);
   pcb[p].priority = -1;
-  scheduler(ctx,-1);
+  scheduler(ctx);
 
 }
 
@@ -130,6 +176,7 @@ void createProcess(uint32_t pc, uint32_t cpsr, uint32_t priority  ){
   pcb[ pid ].ctx.cpsr = cpsr;
   pcb[ pid ].ctx.pc   = pc;
   pcb[ pid ].ctx.sp   = stack + pid*0x00001000;
+  addToQueue(priority,pid);
   print("created a process P%d\n",pid,0,0);
   wipeChannels(pid);
 }
@@ -156,6 +203,7 @@ int copyProcess(ctx_t * ctx){
   uint32_t relativeSP = oldStack - sp; //dodgy!!
   pcb[pid].ctx.sp = newStack - relativeSP;
   pcb[pid].ctx.gpr[ 0 ] = 0;
+  addToQueue(0,pid);
   wipeChannels(pid);
   //print("P%d",pid,0,0);
   return pid;
@@ -193,6 +241,7 @@ void kernel_handler_rst( ctx_t* ctx              ) {
    *   mode, with IRQ interrupts enabled, and
    * - the PC and SP values matche the entry point and top of stack.
    */
+   clearQueues();
   createProcess(( uint32_t )( entry_terminal ), 0x50, 0);
   //createProcess(( uint32_t )( entry_P1 ), 0x50, 0);
   //createProcess(( uint32_t )( entry_P2 ), 0x50, 0);
@@ -214,7 +263,7 @@ int do_exit(ctx_t* ctx){
   memset( &pcb[ pid ], 0, sizeof( pcb_t ) );
   pcb[pid].priority = -1;
   wipeChannels(pid);
-  scheduler(ctx,-1);
+  scheduler(ctx);
   return 0;
 }
 void stop(){
@@ -231,7 +280,7 @@ void kernel_handler_svc( ctx_t* ctx, uint32_t id ) {
    */
   switch( id ) {
     case 0x00 : { // yield()
-      scheduler( ctx ,-1);
+      scheduler( ctx);
       break;
     }
     case 0x01 : { // write( fd, x, n )
@@ -327,13 +376,12 @@ void kernel_handler_irq(ctx_t* ctx) {
   // Step 4: handle the interrupt, then clear (or reset) the source.
 
   if( id == GIC_SOURCE_TIMER0 ) {
-    randCount++;
-    scheduler(ctx,-1);
-    agetime++;
-    if(agetime >= maxAge){
-      age();
-      agetime = 0;
+    rounds++;
+    if(rounds > 10){
+      changeQueue();
+      rounds = 0;
     }
+    scheduler(ctx);
     /*PL011_putc( UART0, 'T' );*/ TIMER0->Timer1IntClr = 0x01;
   }
 
