@@ -5,7 +5,7 @@
 void testFS();
 
 typedef struct{
-  char* name;
+  char name[5];
   uint32_t add;
   int size;
 } fd_t;

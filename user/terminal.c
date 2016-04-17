@@ -1,6 +1,7 @@
 #include "terminal.h"
 
 int running = 0;
+int mode = 0;
 
 //sends data to pid
 void testChannel(int pid){
@@ -20,7 +21,11 @@ void run(char *x){
       close();
     }else{
       running = i;
-      yield();
+      if(!mode){
+        while(1){
+          yield();
+        }
+      }
     }
   }else if(strcomp(x,"p1") == 0){
     int i = fork();
@@ -29,7 +34,11 @@ void run(char *x){
       close();
     }else{
       running = i;
-      yield();
+      if(!mode){
+        while(1){
+          yield();
+        }
+      }
     }
   }else if(strcomp(x,"phil") == 0){
     int i = fork();
@@ -38,9 +47,12 @@ void run(char *x){
       close();
     }else{
       running = i;
-      while(1){
-      yield();
-    }
+      if(!mode){
+        while(1){
+          yield();
+        }
+      }
+
     }
   }else if(strcomp(x,"bottles") == 0){
     int i = fork();
@@ -50,7 +62,11 @@ void run(char *x){
       close();
     }else{
       running = i;
-      yield();
+      if(!mode){
+        while(1){
+          yield();
+        }
+      }
     }
   }else if(strcomp(x,"rec") == 0){
     int i = fork();
@@ -60,7 +76,11 @@ void run(char *x){
     }else{
       running = i;
       testChannel(i);
-
+      if(!mode){
+        while(1){
+          yield();
+        }
+      }
     }
   }else if(strcomp(x,"fs") == 0){
     int i = fork();
@@ -69,12 +89,18 @@ void run(char *x){
       close();
     }else{
       running = i;
-      while(1){
-        yield();
+      if(!mode){
+        while(1){
+          yield();
+        }
       }
+
     }
   }else if(strcomp(x, "quit") == 0){
     kill(running);
+    running = 0;
+  }else if(strcomp(x, "&") == 0){
+    mode = !mode;
     running = 0;
   }else if(strcomp(x, "tasks") == 0){
     print("Running: %d \n", running,0,0);
