@@ -5,6 +5,19 @@ fd_t fdt[fileCount];
 #define fileNameSize 5
 int directoryAddress = 0;
 
+/*
+FILESYSTEM OVERVIEW:
+Storage consists of a 'boot sector' that is loaded on startup and maps file names
+to their contents addresses, and directories to their own 'sectors' that work in
+the same way. When files are created, they are added to the current sector.
+Known issues:
+  text files can be too big and overwrite the next file
+  only 1 new directoryu per directory (sorry)
+
+
+*/
+
+
 //gets a usable address for a file of length len
 int getAdd(int slot){
   int add = 10;
@@ -73,7 +86,7 @@ uint32_t getDirectoryAddress(){
   return directoryAddress + 20;
 }
 
-
+//open and load sector with given name
 void openDirectory(char* name){
   int slot = -1;
   for(int i=0;i< 10;i++){
@@ -91,7 +104,7 @@ void openDirectory(char* name){
   print("/ \n",0,0,0);
 }
 }
-
+//create a new sector and point to it in current sector
 void createDirectory(char* name){
   int slot = -1;
   for(int i=0;i< 10;i++){
@@ -116,7 +129,7 @@ disk_wr(fdt[slot].add,&directory,sizeof(directory));
 print("created directory\n",0,0,0);
 writeBootSector();
 }
-
+//save the current sector to storage
 void writeBootSector(){
   uint32_t add = 0;
   uint32_t size = 0;
@@ -129,10 +142,12 @@ void writeBootSector(){
 
   }
 }
+//save a program state
+//not implemented
 void save(void (*func)(void) ){
 }
 
-
+//reads the boot sector from storage
 void readBootSector(){
   uint32_t add = 0;
   uint32_t size = 0;
@@ -146,7 +161,7 @@ void readBootSector(){
 void boot(){
   readBootSector();
 }
-
+//a test program to write and read a file
 void testFS(){
 
   char* filen1 = "cats";

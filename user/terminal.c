@@ -1,7 +1,7 @@
 #include "terminal.h"
 
 int running = 0;
-int mode = 0;
+int mode = 1;
 char* killstr = "kill ";
 char* mkdirstr = "mkdir ";
 char* cdstr = "cd ";
@@ -249,7 +249,6 @@ void run(char *x){
   }else if(strcomp(x, "ls") == 0){
     list();
   }else if(endProccess(x)){
-
   }else{
     print(x,0,0,0);
     print(" is not a known command \n",0,0,0);
@@ -257,7 +256,12 @@ void run(char *x){
   return;
 }
 
-
+/*
+TERMINAL OVERVIEW:
+Read in 1 char at a time and add to a command buffer.
+When enter is pressed, pass to run() function.
+if '&' is not set, terminal will yield
+*/
 void terminal(){
   boot();
   char x = 'a';

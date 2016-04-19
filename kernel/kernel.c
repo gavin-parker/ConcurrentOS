@@ -1,26 +1,34 @@
 #include "kernel.h"
 
-/* Since we *know* there will be 2 processes, stemming from the 2 user
- * programs, we can
- *
- * - allocate a fixed-size process table (of PCBs), and use a pointer
- *   to keep track of which entry is currently executing, and
- * - employ a fixed-case of round-robin scheduling: no more processes
- *   can be created, and neither is able to complete.
- */
 #define programs 10
 pcb_t pcb[ programs ], *current = NULL;
 int processCount = 0;
 uint32_t stack = &tos_irq;
 //maxAge is the number of fires of the timer before ageing the processes
-int agetime = 0;
 int maxAge = 3;
-int randCount = 0;
 int channels[programs][programs];
 int queues[3][programs];
 int rounds = 0;
 int currentQueue = 0;
-int queueIndex = 0;
+int q1Rounds = 3;
+int q2Rounds = 2;
+int q3Rounds = 1;
+int thisRound = 0;
+int debug = 1;
+/*
+SCHEDULER OVERVIEW:
+Processes are assigned to 3 different process queues, each with different priorities.
+The processes in each priority queue are run repeatedly, with higher priority queues having more iterations.
+When a process has been descheduled it is 'aged' and eventually moved to a different priority queue.
+'waiting' / yielding processes will naturally move quickly up the the lower priority queues.
+
+IPC OVERVIEW:
+IPC uses synchronous 1-way channels. Each process can send data to any other process
+and can receive from multiple channels. When sending/getting data the process
+waits for confirmation
+*/
+
+
 
 //Empties the process queues
 void clearQueues(){
@@ -69,12 +77,9 @@ void changeQueue(){
   int nextQueue = (currentQueue+1)%3;
   if(members(nextQueue) > 0){
     currentQueue = nextQueue;
-    queueIndex = 0;
   }else if(members((nextQueue+1)%3)>0){
     currentQueue = (nextQueue+1)%3;
-    queueIndex = 0;
   }else if(members(currentQueue)>0){
-    queueIndex = 0;
   }else{
     print("ALL QUEUES EMPTY. OH DEAR :( \n",0,0,0);
     while(1){
@@ -89,13 +94,14 @@ int getNextProcess(int pid){
   if(members(currentQueue) == 0){
     changeQueue();
     rounds = 0;
+    thisRound = 0;
   }
   //Queue has at least 1 member
   int j = 0;
   int first = -1;
   //find next position in queue and first process
   for(int i=0;i < programs;i++){
-    if(queues[currentQueue][i] != -1){
+    if(queues[currentQueue][i] != -1 && first == -1){
       first = queues[currentQueue][i];
     }
     if(queues[currentQueue][i] == pid){
@@ -134,14 +140,19 @@ void scheduler( ctx_t* ctx) {
   if(pcb[id].priority >= maxAge){
     removeFromQueue(currentQueue,id);
     removeFromQueue((currentQueue+2)%3,id);
+    removeFromQueue((currentQueue+1)%3,id);
     addToQueue((currentQueue+1)%3,id);
+    pcb[id].priority = 0;
   }
+  thisRound++;
   /*if(id != 0 && pcb[id].priority != -1){
     pcb[id].priority += 1;
   } */
   //print("P%d",nextId,0,0);
 
 }
+
+//kill a process
 void killProcess(ctx_t* ctx ,int p){
   removeFromQueue(0,p);
   removeFromQueue(1,p);
@@ -163,7 +174,7 @@ int getSlot(){
   processCount++;
   return (processCount-1);
 }
-
+//blank the channel contents for a new process
 void wipeChannels(uint32_t pid){
   for(int i=0;i < programs;i++){
     channels[pid][i] = -1;
@@ -184,7 +195,8 @@ void createProcess(uint32_t pc, uint32_t cpsr, uint32_t priority  ){
   wipeChannels(pid);
 }
 
-//copy whole ctx to new process
+//FORK to create two seperate but identical processes
+//copies stack space and ctx
 int copyProcess(ctx_t * ctx){
   //get a new pid
   pid_t pid = getSlot();
@@ -260,7 +272,7 @@ int do_fork(ctx_t* ctx){
   return copyProcess(ctx);
 }
 
-
+//kill the current process
 int do_exit(ctx_t* ctx){
   pid_t pid = current->pid;
   memset( &pcb[ pid ], 0, sizeof( pcb_t ) );
@@ -303,7 +315,7 @@ void kernel_handler_svc( ctx_t* ctx, uint32_t id ) {
       ctx->gpr[ 0 ] = r;
       break;
     }
-    case 0x03 : {
+    case 0x03 : {//close() - could use same handler as kill with diff. flag?
       do_exit(ctx);
       break;
     }
@@ -318,7 +330,7 @@ void kernel_handler_svc( ctx_t* ctx, uint32_t id ) {
       ctx->gpr[ 0 ] = n;
       break;
     }
-    case 0x05 : {
+    case 0x05 : {//kill(id)
       killProcess(ctx, ctx->gpr[0]);
       break;
     }
@@ -355,7 +367,7 @@ void kernel_handler_svc( ctx_t* ctx, uint32_t id ) {
     ctx->gpr[0] = dat;
       break;
     }
-    case 0x08 : {
+    case 0x08 : {//getId() - returns the current pid, useful for IPC
       int pid = current->pid;
       ctx->gpr[0] = pid;
       break;
@@ -378,12 +390,24 @@ void kernel_handler_irq(ctx_t* ctx) {
   int id = GICC0->IAR;
   // Step 4: handle the interrupt, then clear (or reset) the source.
 
+
   if( id == GIC_SOURCE_TIMER0 ) {
+    //if the whole queue has had a timeslice
+    //determine whether to go to next queue or repeat
+    if(thisRound >= members(currentQueue)){
+    thisRound = 0;
     rounds++;
-    if(rounds > 10){
+    if(currentQueue == 0 && rounds >= q1Rounds){
+      changeQueue();
+      rounds = 0;
+    }else if(currentQueue == 1 && rounds >= q2Rounds){
+      changeQueue();
+      rounds = 0;
+    }else if(currentQueue == 2 && rounds >= q3Rounds){
       changeQueue();
       rounds = 0;
     }
+  }
     scheduler(ctx);
     /*PL011_putc( UART0, 'T' );*/ TIMER0->Timer1IntClr = 0x01;
   }
