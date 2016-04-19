@@ -143,7 +143,10 @@ void scheduler( ctx_t* ctx) {
 
 }
 void killProcess(ctx_t* ctx ,int p){
-  removeFromQueue(pcb[p].priority,p);
+  removeFromQueue(0,p);
+  removeFromQueue(1,p);
+  removeFromQueue(2,p);
+
   pcb[p].priority = -1;
   scheduler(ctx);
 

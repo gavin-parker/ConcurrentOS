@@ -9,3 +9,7 @@ typedef struct{
   uint32_t add;
   int size;
 } fd_t;
+
+int readTextFile(char* name, char* buff);
+void writeTextFile(char* text, char* name);
+void boot();

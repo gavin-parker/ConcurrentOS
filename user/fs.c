@@ -1,4 +1,5 @@
 #include "fs.h"
+#include "bottles.h"
 #define fileCount 10
 fd_t fdt[fileCount];
 #define fileNameSize 5
@@ -11,14 +12,26 @@ int getAdd(int slot){
   return add;
 }
 
+void hello(){
+  print("hello\n",0,0,0);
+}
+
 void writeTextFile(char* text, char* name){
-  int slot = 0;
+  int slot = -1;
+  for(int i=0;i< 10;i++){
+    if(!strcomp(name,fdt[i].name)){
+      slot = i;
+      break;
+    }
+  }
+  if(slot == -1){
   for(int i=0;i< 10;i++){
     if(fdt[i].name == NULL || fdt[i].name[0] == '\0'){
       slot = i;
       break;
     }
   }
+}
   int len = 0;
   while(text[len] != '\0'){
     len++;
@@ -32,18 +45,22 @@ void writeTextFile(char* text, char* name){
   print(fdt[slot].name,0,0,0);
   print("Written text file to %d\n",a,0,0);
 }
-void readTextFile(char* name, char* buffer){
+int readTextFile(char* name, char* buff){
   print("Reading text file \n",0,0,0);
-  int slot = 0;
+  int slot = -1;
   for(int i=0;i< 10;i++){
     if(!strcomp(name,fdt[i].name)){
       slot = i;
       break;
     }
   }
-  disk_rd(fdt[slot].add,buffer,fdt[slot].size);
+  if(slot < 0){
+    return 0;
+  }
+  disk_rd(fdt[slot].add,buff,fdt[slot].size);
   print("Read text file from address %d \n",fdt[slot].add,0,0);
-}
+  return 1;
+  }
 
 
 
@@ -68,6 +85,10 @@ void writeBootSector(){
     a++;*/
   }
 }
+void save(void (*func)(void) ){
+}
+
+
 void readBootSector(){
   uint32_t add = 0;
   uint32_t size = 0;
@@ -89,17 +110,15 @@ void testFS(){
   char* file1 = "I like cats\n";
   char* filen2 = "dogs";
   char* file2 = "I like dogs\n";
-  char* buff[20];
-  char* buff2[20];
+  char buff[20] = {NULL};
 
   writeTextFile(file1,filen1);
   writeTextFile(file2,filen2);
 
   boot();
-  //readTextFile(filen1,buff);
-  //print(buff,0,0,0);
-  readTextFile(filen2,buff);
+  readTextFile(filen1, buff);
   print(buff,0,0,0);
+
 while(1){
 
 }

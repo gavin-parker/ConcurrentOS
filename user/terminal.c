@@ -2,6 +2,7 @@
 
 int running = 0;
 int mode = 0;
+char* killstr = "kill ";
 
 //sends data to pid
 void testChannel(int pid){
@@ -10,6 +11,81 @@ void testChannel(int pid){
 
   int a = getChan(pid);
   print("terminal got %d from %d",a,pid,0);
+}
+
+int endProccess(char* command){
+  for(int i=0;i < 5;i++){
+    if(command[i] != killstr[i]){
+      return 0;
+    }
+  }
+  int p = command[5] - '0';
+  print("killing process %d \n",p,0,0);
+  kill(p);
+  return 1;
+}
+
+void writeFile(){
+  char x = 'a';
+  char name[20] = "";
+  char text[20] = "";
+
+  uint32_t buffer = 0;
+  print("Please enter the file name\n",0,0,0);
+  write(0,":",1);
+  while(1){
+    read(0, &x, 1);
+    if((char)x == '\r'){
+      write(0, "\n",1);
+      if(buffer > 0){
+        name[buffer] = '\0';
+        break;
+      }
+      buffer = 0;
+      x = 'a';
+    }else{
+      name[buffer] = x;
+      write( 0, &x,1);
+      buffer++;
+    }
+  }
+  if(readTextFile(&name, text)){
+    print("Opened ",0,0,0);
+    print(name,0,0,0);
+    print("\n",0,0,0);
+    print(text,0,0,0);
+    while(text[buffer] != '\0'){
+      buffer++;
+    }
+  }else{
+    print("Made ",0,0,0);
+    print(name,0,0,0);
+    print("\n",0,0,0);
+  }
+
+
+  while(1){
+    read(0, &x, 1);
+    if((char)x == '\\'){
+      write(0, "\n",1);
+      if(buffer > 0){
+        text[buffer] = '\0';
+        break;
+      }
+      buffer = 0;
+      x = 'a';
+    }else{
+      text[buffer] = x;
+      write( 0, &x,1);
+      buffer++;
+    }
+
+  }
+  writeTextFile(text,name);
+
+
+
+
 }
 
 
@@ -96,14 +172,17 @@ void run(char *x){
       }
 
     }
-  }else if(strcomp(x, "quit") == 0){
-    kill(running);
-    running = 0;
   }else if(strcomp(x, "&") == 0){
     mode = !mode;
     running = 0;
   }else if(strcomp(x, "tasks") == 0){
     print("Running: %d \n", running,0,0);
+  }else if(strcomp(x, "read") == 0){
+
+  }else if(strcomp(x, "write") == 0){
+    writeFile();
+  }else if(endProccess(x)){
+
   }else{
     print(x,0,0,0);
     print(" is not a known command \n",0,0,0);
@@ -112,8 +191,8 @@ void run(char *x){
 }
 
 
-
 void terminal(){
+  boot();
   char x = 'a';
   char command[20] = "";
   uint32_t buffer = 0;
