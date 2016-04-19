@@ -1,5 +1,6 @@
 #include "libc.h"
 
+//write out a string
 int write( int fd, void* x, size_t n ) {
   int r;
   asm volatile( "mov r0, %1 \n"
@@ -13,10 +14,11 @@ int write( int fd, void* x, size_t n ) {
 
   return r;
 }
+//give control back to kernel
 void yield(){
   asm volatile("svc #0     \n");
 }
-
+//read in a string
 int read(int fd, void *buf, size_t nbyte) {
   int r;
 
@@ -31,6 +33,7 @@ int read(int fd, void *buf, size_t nbyte) {
 
   return r;
 }
+//end a process with pid p
 void kill(int p){
   int r;
 
@@ -71,6 +74,7 @@ void sendChan(int pid, int dat){
 return;
 }
 
+//returns the id of this process
 int thisId(){
   int r;
   asm volatile("svc #8     \n" // dont forget to declare a new svc
@@ -111,7 +115,7 @@ int getChan(int chan){
 }
   return result;
 }
-
+//a redundant strlen function...
 int strlen(char* x){
   int len=0;
   while(*x != '\0'){
@@ -121,7 +125,7 @@ int strlen(char* x){
   len++;
   return len;
 }
-
+//compares two strings
 int strcomp(char* x, char* y){
   while (*x != '\0') {
        if (*y == '\0') return  1;
@@ -137,18 +141,9 @@ int strcomp(char* x, char* y){
    }
 
    return 0;
-
-
-  /*
-  while(*x != '\0' && *y != '\0' && *x != '\r' && *y != '\r'){
-    if(*x != *y){
-      return -1;
-    }
-    x++;
-    y++;
-  }
-  return 1; */
 }
+
+//create an identical but seperate clone process
 int fork(){
   int r;
   asm volatile("svc #2     \n" // dont forget to declare a new svc
@@ -156,15 +151,12 @@ int fork(){
               : "=r" (r));
   return r;
 }
-int clone(){
-  asm volatile("svc #5     \n");
-  return 0;
-}
+//end this process
 int close(){
   asm volatile("svc #3     \n");
   return 0;
 }
-
+//print chars and ints
 void print(char* x, int d1, int d2, int d3){
   int escape = 0;
   int i = 0;
@@ -193,6 +185,7 @@ void print(char* x, int d1, int d2, int d3){
   }
   return;
 }
+//gets the digit length of an int
 int getLen( int x){
   if (x <         10) return 1;
   if (x <        100) return 10;
@@ -205,7 +198,7 @@ int getLen( int x){
   if (x < 1000000000) return 100000000;
   return 10;
 }
-
+//writes a digit 
 void writeDigit(int x){
   PL011_putc( UART0, '0' + x );
   return;

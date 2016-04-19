@@ -13,3 +13,6 @@ typedef struct{
 int readTextFile(char* name, char* buff);
 void writeTextFile(char* text, char* name);
 void boot();
+void list();
+void openDirectory(char* name);
+void createDirectory(char* name);

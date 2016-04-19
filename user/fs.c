@@ -3,7 +3,7 @@
 #define fileCount 10
 fd_t fdt[fileCount];
 #define fileNameSize 5
-
+int directoryAddress = 0;
 
 //gets a usable address for a file of length len
 int getAdd(int slot){
@@ -12,10 +12,16 @@ int getAdd(int slot){
   return add;
 }
 
-void hello(){
-  print("hello\n",0,0,0);
+//list all the file names in this directory
+void list(){
+  for(int i=0;i<10;i++){
+    if(fdt[i].size > 0){
+    print(fdt[i].name,0,0,0);
+    print("\n",0,0,0);
+  }
+  }
 }
-
+//write a string into storage
 void writeTextFile(char* text, char* name){
   int slot = -1;
   for(int i=0;i< 10;i++){
@@ -45,6 +51,8 @@ void writeTextFile(char* text, char* name){
   print(fdt[slot].name,0,0,0);
   print("Written text file to %d\n",a,0,0);
 }
+
+//read a string from storage
 int readTextFile(char* name, char* buff){
   print("Reading text file \n",0,0,0);
   int slot = -1;
@@ -61,28 +69,64 @@ int readTextFile(char* name, char* buff){
   print("Read text file from address %d \n",fdt[slot].add,0,0);
   return 1;
   }
+uint32_t getDirectoryAddress(){
+  return directoryAddress + 20;
+}
 
 
+void openDirectory(char* name){
+  int slot = -1;
+  for(int i=0;i< 10;i++){
+    if(!strcomp(name,fdt[i].name)){
+      slot = i;
+      break;
+    }
+  }
+  if(slot>=0){
+    directoryAddress = fdt[slot].add;
+
+  readBootSector();
+  print("opened ",0,0,0);
+  print(name,0,0,0);
+  print("/ \n",0,0,0);
+}
+}
+
+void createDirectory(char* name){
+  int slot = -1;
+  for(int i=0;i< 10;i++){
+    if(!strcomp(name,fdt[i].name)){
+      slot = i;
+      break;
+    }
+  }
+  if(slot == -1){
+  for(int i=0;i< 10;i++){
+    if(fdt[i].name == NULL || fdt[i].name[0] == '\0'){
+      slot = i;
+      break;
+    }
+  }
+}
+strcpy(&fdt[slot].name[0],name);
+fdt[slot].size = 4;
+fdt[slot].add = getDirectoryAddress();
+fd_t directory[fileCount];
+disk_wr(fdt[slot].add,&directory,sizeof(directory));
+print("created directory\n",0,0,0);
+writeBootSector();
+}
 
 void writeBootSector(){
   uint32_t add = 0;
   uint32_t size = 0;
 
-  int a = 0;
+  int a = directoryAddress;
   char* name = "five";
   for(int i=0;i< fileCount;i++){
-    /*
-    name = fdt[i].name;
-    add = fdt[i].add;
-    size = fdt[i].size;*/
-
     disk_wr(a,&fdt[i],sizeof(fd_t));
     a += 1;
-    /*
-    disk_wr(a,&add,sizeof(uint32_t));
-    a += 1;
-    disk_wr(a,&size,sizeof(uint32_t));
-    a++;*/
+
   }
 }
 void save(void (*func)(void) ){
@@ -92,10 +136,9 @@ void save(void (*func)(void) ){
 void readBootSector(){
   uint32_t add = 0;
   uint32_t size = 0;
-  int a = 0;
+  int a = directoryAddress;
   for(int i=0;i< fileCount;i++){
     disk_rd(a,&fdt[i],sizeof(fd_t));
-    print(fdt[i].name,0,0,0);
     a++;
   }
 }
